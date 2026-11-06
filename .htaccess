@@ -1,4 +1,4 @@
-# ESP32 Home Patient Monitoring System - Production Apache / cPanel Configuration
+# ESP32 Home Patient Monitoring System - Production Apache Configuration
 Options -Indexes
 DirectoryIndex index.php index.html
 
@@ -12,7 +12,16 @@ DirectoryIndex index.php index.html
     # Map legacy /public/ URLs to /frontend/ for zero disruption
     RewriteRule ^public/(.*)$ frontend/$1 [R=301,L,NC]
 
-    # Transparently route /api requests to backend/api
+    # Clean REST API v1 Routing
+    RewriteRule ^api/v1/readings/?$ backend/api/ingest/vitals.php [L,QSA]
+    RewriteRule ^api/v1/ecg/?$ backend/api/ingest/ecg_batch.php [L,QSA]
+    RewriteRule ^api/v1/blood-pressure/?$ backend/api/blood_pressure/manual_entry.php [L,QSA]
+    RewriteRule ^api/v1/latest/?$ backend/api/vitals/latest.php [L,QSA]
+    RewriteRule ^api/v1/history/?$ backend/api/vitals/history.php [L,QSA]
+    RewriteRule ^api/v1/alerts/?$ backend/api/alerts/list.php [L,QSA]
+    RewriteRule ^api/v1/device/status/?$ backend/api/devices/status.php [L,QSA]
+
+    # Fallback: Transparently route any other /api/* requests to backend/api/*
     RewriteRule ^api/(.*)$ backend/api/$1 [L,QSA]
 </IfModule>
 
