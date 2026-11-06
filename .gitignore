@@ -5,6 +5,8 @@
 # --- AI Assistant, Chat Histories & Planning Artifacts ---
 .gemini/
 .system_generated/
+.claude/
+.cursor/
 brain/
 scratch/
 *.plan
@@ -78,6 +80,11 @@ logs/
 *.temp
 *.bak
 *.swp
+*.session
+*.sqlite
+*.db
+coverage/
+.phpunit.result.cache
 
 # --- Package Managers & Dependencies ---
 vendor/
