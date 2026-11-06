@@ -26,7 +26,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html/
 
 # Install Composer dependencies (MongoDB client library)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=ext-mongodb
 
 # Ensure web server write access to local fallback data directory
 RUN chown -R www-data:www-data /var/www/html/backend/data_store \
