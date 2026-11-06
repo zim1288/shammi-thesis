@@ -150,18 +150,35 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok && json.success) {
         const data = json.data || {};
 
-        // Dispatch via EmailJS if configured
-        if (data.dispatch_code && window.emailjs && window.EMAILJS_CONFIG && window.EMAILJS_CONFIG.serviceId && window.EMAILJS_CONFIG.publicKey !== "YOUR_EMAILJS_PUBLIC_KEY") {
-          emailjs.send(window.EMAILJS_CONFIG.serviceId, window.EMAILJS_CONFIG.templateId, {
+        // Only dispatch EmailJS email when a fresh code is newly generated
+        // (Prevents draining free tier quota on simple browser refreshes)
+        const isFreshIssue = (data.status === 'newly_issued' || isExplicitResend);
+
+        if (isFreshIssue && data.dispatch_code && window.emailjs && window.EMAILJS_CONFIG && window.EMAILJS_CONFIG.serviceId && window.EMAILJS_CONFIG.publicKey) {
+          const actionLabel = (userAction === 'forgot_password') ? 'Password Reset' : 'Account Verification';
+          const templateParams = {
             to_email: userEmail,
-            user_name: userName,
+            email: userEmail,
+            user_email: userEmail,
+            reply_to: 'no-reply@telemetry-hud.local',
+            user_name: userName || 'Authorized Clinician',
+            to_name: userName || 'Authorized Clinician',
+            Action_type: actionLabel,
+            action_type: actionLabel,
             otp_code: data.dispatch_code,
-            action_type: userAction
-          }).then(() => {
-            console.log('EmailJS OTP dispatched to', userEmail);
-          }).catch(err => {
-            console.warn('EmailJS delivery fallback:', err);
-          });
+            code: data.dispatch_code,
+            passcode: data.dispatch_code
+          };
+
+          emailjs.send(window.EMAILJS_CONFIG.serviceId, window.EMAILJS_CONFIG.templateId, templateParams)
+            .then((resp) => {
+              console.log('✅ EmailJS OTP email successfully dispatched to', userEmail, resp.status, resp.text);
+              updateSubtitle('✉️ Verification email dispatched to your inbox. Valid for 30 minutes.');
+            })
+            .catch(err => {
+              console.warn('⚠️ EmailJS delivery notice:', err);
+              updateSubtitle('Verification code generated. Please check your inbox or spam folder.');
+            });
         }
 
         // Start 2-minute cooldown timer
@@ -171,8 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (data.status === 'active_reused') {
-          updateSubtitle('Active 30-minute verification code session resumed.');
-        } else {
+          updateSubtitle('Active 30-minute verification code session resumed. Check your inbox.');
+        } else if (!window.EMAILJS_CONFIG || !window.EMAILJS_CONFIG.serviceId) {
           updateSubtitle('A new verification code has been dispatched. Valid for 30 minutes.');
         }
       } else {
