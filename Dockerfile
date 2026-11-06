@@ -1,6 +1,21 @@
 FROM php:8.2-apache
 
-# Enable essential Apache modules and allow .htaccess overrides
+# 1. Install system dependencies & MongoDB build tools
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    curl \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install and enable official PHP MongoDB Driver extension
+RUN pecl install mongodb \
+    && docker-php-ext-enable mongodb
+
+# 3. Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# 4. Enable Apache Rewrite & Headers modules
 RUN a2enmod rewrite headers \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
@@ -10,7 +25,7 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html/
 
-# Ensure web server has write access to data storage
+# Ensure web server write access to local fallback data directory
 RUN chown -R www-data:www-data /var/www/html/backend/data_store \
     && chmod -R 775 /var/www/html/backend/data_store
 
