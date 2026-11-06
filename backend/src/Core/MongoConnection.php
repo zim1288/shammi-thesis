@@ -19,7 +19,23 @@ class MongoConnection {
     private ?Manager $manager = null;
     private string $dbName;
     private bool $isConnected = false;
+    private ?string $lastError = null;
     private string $storageFallbackDir;
+
+    public static function sanitizeUri(string $uri): string {
+        // Automatically URL-encode password if it contains unencoded '/'
+        if (preg_match('#^(mongodb(?:\+srv)?://)([^:]+):([^@]+)@(.+)$#', $uri, $m)) {
+            $prefix = $m[1];
+            $user   = $m[2];
+            $pass   = $m[3];
+            $rest   = $m[4];
+            if (strpos($pass, '%') === false && strpos($pass, '/') !== false) {
+                $pass = urlencode($pass);
+                return "{$prefix}{$user}:{$pass}@{$rest}";
+            }
+        }
+        return $uri;
+    }
 
     private function __construct() {
         $this->dbName = MONGO_DB_NAME;
@@ -30,12 +46,15 @@ class MongoConnection {
         }
 
         try {
-            $this->manager = new Manager(MONGO_URI, MONGO_OPTIONS);
+            $cleanUri = self::sanitizeUri(MONGO_URI);
+            $this->manager = new Manager($cleanUri, MONGO_OPTIONS);
             // Execute quick ping to verify connection
             $pingCommand = new Command(['ping' => 1]);
             $this->manager->executeCommand($this->dbName, $pingCommand);
             $this->isConnected = true;
+            $this->lastError = null;
         } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
             error_log("MongoDB Connection Warning: " . $e->getMessage() . ". Using JSON file storage mode.");
             $this->isConnected = false;
         }
@@ -60,7 +79,12 @@ class MongoConnection {
             'configured_uri'    => $isLocalDefault ? 'UNCONFIGURED (Defaulting to localhost:27017)' : 'CONFIGURED',
             'php_ext_mongodb'   => extension_loaded('mongodb'),
             'database_name'     => $this->dbName,
-            'hint'              => $this->isConnected ? 'Writing live to MongoDB Atlas!' : 'Set MONGO_URI in Render Environment Variables with your Atlas cluster connection string to enable live cloud database writes.'
+            'last_error'        => $this->lastError,
+            'hint'              => $this->isConnected 
+                ? 'Writing live to MongoDB Atlas!' 
+                : ($this->lastError 
+                    ? 'MongoDB Atlas Error: ' . $this->lastError . ' (Check Database User credentials in MongoDB Atlas)' 
+                    : 'Set MONGO_URI in Render Environment Variables with your Atlas cluster connection string.')
         ];
     }
 
