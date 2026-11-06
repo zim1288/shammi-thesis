@@ -1,0 +1,54 @@
+[
+    {
+        "id": "BP-01",
+        "patient_id": "PT-8802",
+        "systolic_bp": 120,
+        "diastolic_bp": 80,
+        "pulse_rate": 72,
+        "measurement_timestamp": "2026-11-02T10:15:00Z",
+        "notes": "Patient resting seated, left brachial artery cuff.",
+        "recorded_by": "Staff Nurse Jane",
+        "data_source": "manual_entry",
+        "is_valid": true,
+        "created_at": "2026-11-02T10:15:00Z"
+    },
+    {
+        "patient_id": "PT-8802",
+        "systolic_bp": 122,
+        "diastolic_bp": 78,
+        "pulse_rate": 72,
+        "measurement_timestamp": "2026-11-05T16:37:41+06:00",
+        "notes": "Resting sitting position",
+        "recorded_by": "Dr. S. Jenkins",
+        "data_source": "manual_entry",
+        "is_valid": true,
+        "created_at": "2026-11-05T16:37:41+06:00",
+        "id": "6aec5c7568adec522b0864b2"
+    },
+    {
+        "patient_id": "PT-8802",
+        "systolic_bp": 118,
+        "diastolic_bp": 78,
+        "pulse_rate": 72,
+        "measurement_timestamp": "2026-11-05T16:56:21.1457978+06:00",
+        "notes": "Post-stabilization checkup [Position: Left Arm - Sitting]",
+        "recorded_by": "Dr. S. Jenkins",
+        "data_source": "manual_entry",
+        "is_valid": true,
+        "created_at": "2026-11-05T16:56:23+06:00",
+        "id": "6aec60d768adec522b0864b3"
+    },
+    {
+        "patient_id": "6aec4319bf262e6b7f06ea72",
+        "systolic_bp": 120,
+        "diastolic_bp": 80,
+        "pulse_rate": 76,
+        "measurement_timestamp": "2026-11-05T23:38",
+        "notes": "Position: Left Arm - Sitting",
+        "recorded_by": "Refat-E-Shammi",
+        "data_source": "manual_entry",
+        "is_valid": true,
+        "created_at": "2026-11-05T23:39:26+06:00",
+        "id": "6aecbf4e2992c818a003b832"
+    }
+]

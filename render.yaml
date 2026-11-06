@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: esp32-patient-monitoring
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/patients/list.php
+    envVars:
+      - key: PORT
+        value: 10000

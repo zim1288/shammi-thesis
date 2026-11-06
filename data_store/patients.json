@@ -1,0 +1,154 @@
+[
+    {
+        "id":  "PT-8802",
+        "patient_code":  "PT-8802",
+        "full_name":  "Robert Vance",
+        "age":  58,
+        "gender":  "Male",
+        "phone":  "+880 1712-345678",
+        "ward_origin":  "ICU Step-Down",
+        "room_bed":  "Bed 04 / Room 402",
+        "assigned_device_uid":  "ESP32-NODE-01",
+        "device_mac":  "24:6F:28:B4:7C:9A",
+        "risk_status":  "Normal",
+        "discharge_date":  "2026-11-03",
+        "medical_notes":  "Post-CABG surgery recovery. Ward bed decongested for incoming emergency admissions. Continuous ECG \u0026 SpO2 required.",
+        "baseline_thresholds":  {
+                                    "hr_min":  55,
+                                    "hr_max":  105,
+                                    "spo2_min":  94,
+                                    "temp_max":  37.8
+                                },
+        "created_at":  "2026-11-02T10:00:00Z"
+    },
+    {
+        "id":  "PT-4091",
+        "patient_code":  "PT-4091",
+        "full_name":  "Nasreen Akter",
+        "age":  46,
+        "gender":  "Female",
+        "phone":  "+880 1819-876543",
+        "ward_origin":  "Post-Operative Ward",
+        "room_bed":  "Bed 12 / Post-Op",
+        "assigned_device_uid":  "ESP32-NODE-02",
+        "device_mac":  "30:AE:A4:07:3E:12",
+        "risk_status":  "Caution",
+        "discharge_date":  "2026-11-04",
+        "medical_notes":  "Laparoscopic cholecystectomy post-stabilization. Mild intermittent tachycardia noted during exertion.",
+        "baseline_thresholds":  {
+                                    "hr_min":  60,
+                                    "hr_max":  110,
+                                    "spo2_min":  95,
+                                    "temp_max":  38
+                                },
+        "created_at":  "2026-11-04T08:30:00Z"
+    },
+    {
+        "id":  "PT-7124",
+        "patient_code":  "PT-7124",
+        "full_name":  "Anisur Rahman",
+        "age":  63,
+        "gender":  "Male",
+        "phone":  "+880 1911-223344",
+        "ward_origin":  "Emergency Observation",
+        "room_bed":  "Bed 02 / Emergency",
+        "assigned_device_uid":  "ESP32-NODE-03",
+        "device_mac":  "4C:11:AE:F5:21:88",
+        "risk_status":  "Normal",
+        "discharge_date":  "2026-11-02",
+        "medical_notes":  "Severe asthma exacerbation stabilized in ER. Transitioned home to optimize emergency bed availability.",
+        "baseline_thresholds":  {
+                                    "hr_min":  55,
+                                    "hr_max":  100,
+                                    "spo2_min":  93,
+                                    "temp_max":  37.5
+                                },
+        "created_at":  "2026-11-02T14:15:00Z"
+    },
+    {
+        "id":  "PT-5518",
+        "patient_code":  "PT-5518",
+        "full_name":  "Tahmina Begum",
+        "age":  71,
+        "gender":  "Female",
+        "phone":  "+880 1622-998877",
+        "ward_origin":  "Cardiology Step-Down",
+        "room_bed":  "Bed 09 / Cardio",
+        "assigned_device_uid":  "ESP32-NODE-04",
+        "device_mac":  "58:BF:25:31:AA:BC",
+        "risk_status":  "Critical",
+        "discharge_date":  "2026-11-05",
+        "medical_notes":  "Congestive heart failure with fluid management. High sensitivity SpO2 and arrhythmia threshold alerts set.",
+        "baseline_thresholds":  {
+                                    "hr_min":  50,
+                                    "hr_max":  95,
+                                    "spo2_min":  92,
+                                    "temp_max":  37.6
+                                },
+        "created_at":  "2026-11-05T09:00:00Z"
+    },
+    {
+        "id":  "PT-3305",
+        "patient_code":  "PT-3305",
+        "full_name":  "Kamal Hossain",
+        "age":  52,
+        "gender":  "Male",
+        "phone":  "+880 1555-443322",
+        "ward_origin":  "General Surgery Recovery",
+        "room_bed":  "Bed 15 / Gen-Surg",
+        "assigned_device_uid":  "ESP32-NODE-05",
+        "device_mac":  "60:01:94:82:77:33",
+        "risk_status":  "Normal",
+        "discharge_date":  "2026-11-01",
+        "medical_notes":  "Post-appendectomy day 4. Vital signs stable. Remote home tele-monitoring before suture removal.",
+        "baseline_thresholds":  {
+                                    "hr_min":  60,
+                                    "hr_max":  100,
+                                    "spo2_min":  95,
+                                    "temp_max":  37.5
+                                },
+        "created_at":  "2026-11-01T11:45:00Z"
+    },
+    {
+        "id":  "6aec4319bf262e6b7f06ea72",
+        "patient_code":  "PT-4371",
+        "full_name":  "Begum Rokeya",
+        "age":  49,
+        "gender":  "Female",
+        "phone":  "+880 1700-112233",
+        "ward_origin":  "ICU Step-Down",
+        "room_bed":  "Discharged Home",
+        "assigned_device_uid":  "ESP32-NODE-06",
+        "device_mac":  "24:6F:28:19CCCC",
+        "risk_status":  "Normal",
+        "discharge_date":  "2026-11-05",
+        "medical_notes":  "Recovering from acute respiratory distress. Successfully transitioned home.",
+        "baseline_thresholds":  {
+                                    "hr_min":  55,
+                                    "hr_max":  105,
+                                    "spo2_min":  94
+                                },
+        "created_at":  "2026-11-05T14:49:29+06:00"
+    },
+    {
+        "id":  "6aed9df84987aeae940c6923",
+        "patient_code":  "PT-1880",
+        "full_name":  "Refactor Test Patient",
+        "age":  45,
+        "gender":  "Female",
+        "phone":  "+8801700000000",
+        "ward_origin":  "Cardiac Step-Down",
+        "room_bed":  "Discharged Home",
+        "assigned_device_uid":  "ESP32-NODE-TEST",
+        "device_mac":  "24:6F:28:AA:BB:CC",
+        "risk_status":  "Normal",
+        "discharge_date":  "2026-11-06",
+        "medical_notes":  "Post refactor validation patient.",
+        "baseline_thresholds":  {
+                                    "hr_min":  50,
+                                    "hr_max":  110,
+                                    "spo2_min":  93
+                                },
+        "created_at":  "2026-11-06T15:29:28+06:00"
+    }
+]

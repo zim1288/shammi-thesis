@@ -1,0 +1,22 @@
+[
+  {
+    "id": "USR-001",
+    "username": "doctor@hospital.gov.bd",
+    "email": "doctor@hospital.gov.bd",
+    "password_hash": "$2y$10$Ie4imI9PxDBOUPFAwOarKuNb0UOWNYE1i71M4cTVXCYrQ7tkepDgC",
+    "full_name": "Dr. S. Jenkins, MD",
+    "role": "attending_physician",
+    "ward": "ICU Step-Down",
+    "created_at": "2026-11-06T10:00:00+06:00"
+  },
+  {
+    "id": "USR-002",
+    "username": "admin",
+    "email": "admin@monitoring.local",
+    "password_hash": "$2y$10$Ie4imI9PxDBOUPFAwOarKuNb0UOWNYE1i71M4cTVXCYrQ7tkepDgC",
+    "full_name": "Dr. S. Jenkins, MD",
+    "role": "lead_researcher",
+    "ward": "ICU Step-Down",
+    "created_at": "2026-11-06T10:00:00+06:00"
+  }
+]

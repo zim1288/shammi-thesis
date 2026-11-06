@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Doctor Dashboard — Patient Directory & IoT Device Pairing</title>
+  
+  <!-- Clinical HUD Styling & Icons -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Production Authentication Guard (Enforces Login First) -->
+  <script src="js/auth_guard.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 1. MANDATORY NOTICE BANNER (Educational Prototype) -->
+    <div class="notice-banner">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pulse-dot"></span>
+        <span style="font-weight: 700; letter-spacing: 0.02em;">⚠️ Educational Prototype — Not for Diagnosis</span>
+        <span style="opacity: 0.6; font-size: 11px;">|</span>
+        <span style="font-size: 11px; opacity: 0.85;">Hospital Ward Decongestion & Post-Stabilization Monitoring System</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+        <span>HEALTHCARE SYSTEM: <strong>DHAKA REGIONAL CLINICAL NETWORK</strong></span>
+        <span>•</span>
+        <span>SUPERVISOR: <strong>DR. S. JENKINS, MD</strong></span>
+      </div>
+    </div>
+
+    <!-- 2. TOP HUD COMMAND BAR & NAVIGATION -->
+    <header class="top-header">
+      <div class="brand-section">
+        <div class="brand-icon-box" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(6, 182, 212, 0.25)); border-color: rgba(99, 102, 241, 0.5); color: #818cf8;">
+          <i class="ri-hospital-line"></i>
+        </div>
+        <div>
+          <h1 class="brand-title">
+            <span>Central Doctor Dashboard</span>
+            <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc;">PORTAL HOME</span>
+          </h1>
+          <p class="brand-subtitle">Remote Patient Directory • Bed Turnover Optimization • ESP32 Hardware Pairing</p>
+        </div>
+      </div>
+
+      <!-- Live Network Indicators -->
+      <div class="header-telemetry-tags">
+        <div class="hud-pill">
+          <i class="ri-hotel-bed-line" style="color: #10b981;"></i>
+          <span>Decongested Beds: <strong id="kpiTopDecongested" style="color: #34d399;">5 Freed</strong></span>
+        </div>
+
+        <div class="hud-pill highlight">
+          <i class="ri-cpu-line" style="color: #06b6d4;"></i>
+          <span>ESP32 Nodes: <strong id="kpiTopNodes" style="color: #e0f2fe;">4 Online</strong></span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="nav-links">
+        <a href="patients.html" class="nav-btn active">
+          <i class="ri-hospital-line"></i>
+          <span>Patient Roster</span>
+        </a>
+        <a href="index.html?patient_id=PT-8802" class="nav-btn">
+          <i class="ri-dashboard-line"></i>
+          <span>Dedicated Telemetry</span>
+        </a>
+        <a href="history.html" class="nav-btn">
+          <i class="ri-line-chart-line"></i>
+          <span>History & CSV</span>
+        </a>
+        <a href="alerts.html" class="nav-btn">
+          <i class="ri-alarm-warning-line"></i>
+          <span>Alerts</span> 
+          <span id="badgeActiveAlerts" style="background:#ef4444;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;">1</span>
+        </a>
+        <!-- Logged-in Clinician Session & Logout -->
+        <div class="hud-pill" style="padding: 4px 6px 4px 12px; gap: 8px; border-color: rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.85);">
+          <i class="ri-user-star-line" style="color: #38bdf8; font-size: 14px;"></i>
+          <span id="navUserBadge" style="font-weight: 600; color: #e2e8f0; font-size: 12px;">Dr. S. Jenkins, MD</span>
+          <button type="button" id="btnNavLogout" class="nav-btn" style="padding: 5px 12px; font-size: 11px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;" title="End Active Session">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+        <button type="button" id="btnNavOpenAddModal" class="nav-btn primary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: #fff; font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35); cursor: pointer;">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient &amp; Device</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- 3. EXECUTIVE KPI DECK (Hospital Ward Decongestion Metrics) -->
+    <section class="kpi-deck">
+      
+      <!-- KPI 1: Total Monitored -->
+      <div class="kpi-card">
+        <div class="kpi-icon-box" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);">
+          <i class="ri-user-heart-line"></i>
+        </div>
+        <div>
+          <div id="statTotalMonitored" class="kpi-num">5</div>
+          <div class="kpi-label">Active Home Patients</div>
+        </div>
+      </div>
+
+      <!-- KPI 2: Hospital Beds Decongested -->
+      <div class="kpi-card">
+        <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25);">
+          <i class="ri-hotel-bed-line"></i>
+        </div>
+        <div>
+          <div id="statBedsFreed" class="kpi-num" style="color: #34d399;">5 Beds</div>
+          <div class="kpi-label">Acute Beds Decongested</div>
+        </div>
+      </div>
+
+      <!-- KPI 3: Risk Tiers Breakdown -->
+      <div class="kpi-card">
+        <div class="kpi-icon-box" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);">
+          <i class="ri-alarm-warning-line"></i>
+        </div>
+        <div>
+          <div id="statRiskTiers" class="kpi-num" style="font-size: 20px; color: #f87171;">1 Crit • 1 Warn</div>
+          <div class="kpi-label">Deterioration Alerts</div>
+        </div>
+      </div>
+
+      <!-- KPI 4: Wearable IoT Hardware Nodes -->
+      <div class="kpi-card">
+        <div class="kpi-icon-box" style="background: rgba(6, 182, 212, 0.12); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.25);">
+          <i class="ri-broadcast-line"></i>
+        </div>
+        <div>
+          <div id="statActiveNodes" class="kpi-num" style="color: #22d3ee;">4 / 5</div>
+          <div class="kpi-label">ESP32 Nodes Streaming</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 4. ACTIVE ROSTER TOOLBAR (Search, Filters, View Modes & Onboarding) -->
+    <section class="roster-toolbar">
+      
+      <!-- Live Search Box -->
+      <div class="search-box-wrap">
+        <i class="ri-search-line"></i>
+        <input type="text" id="patientSearchInput" class="search-input" placeholder="Search by patient name, code (#PT-XXXX), or device UID...">
+      </div>
+
+      <!-- Risk Tier Filters -->
+      <div class="filter-group">
+        <button class="filter-chip active" data-filter="all">All Patients</button>
+        <button class="filter-chip active-ok" data-filter="normal">● Normal</button>
+        <button class="filter-chip active-warn" data-filter="caution">▲ Caution</button>
+        <button class="filter-chip active-crit" data-filter="critical">🚨 Critical</button>
+      </div>
+
+      <!-- Ward Origin Dropdown -->
+      <div>
+        <select id="wardOriginFilter" class="select-ward">
+          <option value="">All Originating Wards</option>
+          <option value="ICU">ICU Step-Down</option>
+          <option value="Post-Operative">Post-Operative Ward</option>
+          <option value="Emergency">Emergency Observation</option>
+          <option value="Cardiology">Cardiology Step-Down</option>
+          <option value="General">General Surgery</option>
+        </select>
+      </div>
+
+      <!-- View Switcher & Intake Action -->
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="btnViewCards" class="nav-btn active" title="Card View" style="padding: 8px 12px;">
+          <i class="ri-grid-fill"></i>
+        </button>
+        <button id="btnViewTable" class="nav-btn" title="Table View" style="padding: 8px 12px;">
+          <i class="ri-table-line"></i>
+        </button>
+        <button id="btnOpenAddModal" class="btn-manual-bp-pill" style="font-size: 13px; padding: 9px 18px;">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient &amp; Pair Device</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- 5. ACTIVE PATIENT DIRECTORY -->
+
+    <!-- A. Card Grid View -->
+    <div id="patientCardsGrid" class="patient-cards-grid">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-dim);">
+        <i class="ri-loader-4-line" style="font-size: 28px; animation: spin 1s linear infinite; display: inline-block;"></i>
+        <p style="margin-top: 10px;">Loading active patient directory...</p>
+      </div>
+    </div>
+
+    <!-- B. Data Table View -->
+    <div id="patientTableWrap" class="patient-table-wrap">
+      <table class="patient-data-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Patient Details</th>
+            <th>Ward Origin</th>
+            <th>Discharged Date</th>
+            <th>Assigned IoT Node</th>
+            <th>Latest Vitals Snapshot</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="patientTableBody">
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-dim);">
+              Loading patient data table...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 6. DEVICE ASSOCIATION MODAL (Discharge Intake & Pairing Flow) -->
+    <div id="modalAddPatient" class="modal-overlay">
+      <div class="modal-container">
+        
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="kpi-icon-box" style="width: 36px; height: 36px; font-size: 18px; background: rgba(79, 70, 229, 0.2); color: #818cf8;">
+              <i class="ri-user-add-line"></i>
+            </div>
+            <div>
+              <h2 style="font-size: 18px; font-weight: 700; color: #ffffff;">Discharge Patient & Pair IoT Hardware</h2>
+              <p style="font-size: 12px; color: var(--text-muted);">Free up acute hospital beds by provisioning wearable telemetry</p>
+            </div>
+          </div>
+          <button id="btnCloseAddModal" class="modal-close-btn">&times;</button>
+        </div>
+
+        <form id="formAddPatient" autocomplete="off">
+          
+          <!-- Section 1: Demographics -->
+          <div style="margin-bottom: 18px;">
+            <div class="form-label" style="color: #38bdf8;">1. Patient Demographics</div>
+            
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" id="inputFullName" class="form-control" placeholder="e.g. Mohammad Harun-ur-Rashid" required>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Age *</label>
+                <input type="number" id="inputAge" class="form-control" placeholder="e.g. 54" min="1" max="120" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Gender</label>
+                <select id="inputGender" class="form-control">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Contact Phone</label>
+                <input type="tel" id="inputPhone" class="form-control" placeholder="e.g. +880 1711-000000">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Decongested From Ward *</label>
+                <select id="inputWard" class="form-control" required>
+                  <option value="ICU Step-Down">ICU Step-Down (Post-Critical Care)</option>
+                  <option value="Post-Operative Ward">Post-Operative Recovery Ward</option>
+                  <option value="Emergency Observation">Emergency Department Observation</option>
+                  <option value="Cardiology Step-Down">Cardiology Ward</option>
+                  <option value="General Surgery Ward">General Surgery Ward</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: IoT Hardware Association -->
+          <div style="margin-bottom: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+            <div class="form-label" style="color: #10b981;">2. Wearable IoT Hardware Association</div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Physical IoT Device UID *</label>
+                <input type="text" id="inputDeviceUid" class="form-control" placeholder="e.g. ESP32-NODE-06" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Device MAC Address</label>
+                <input type="text" id="inputDeviceMac" class="form-control" placeholder="e.g. 24:6F:28:B4:7C:9A">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Baseline Safety Thresholds -->
+          <div style="margin-bottom: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+            <div class="form-label" style="color: #f59e0b;">3. Deterioration Alert Thresholds</div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Heart Rate Range (BPM)</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="number" id="inputHrMin" class="form-control" placeholder="Min (55)" value="55">
+                  <input type="number" id="inputHrMax" class="form-control" placeholder="Max (105)" value="105">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">SpO2 Alarm Threshold (%)</label>
+                <input type="number" id="inputSpo2Min" class="form-control" placeholder="Min % (94)" value="94">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Discharge Medical Notes</label>
+              <textarea id="inputMedicalNotes" class="form-control" rows="2" placeholder="e.g. Stabilized post-laparoscopy. Bed freed for incoming acute emergency admissions."></textarea>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" id="btnCancelAddModal" class="nav-btn" style="padding: 10px 18px;">
+              Cancel
+            </button>
+            <button type="submit" class="nav-btn primary" style="padding: 10px 22px;">
+              <i class="ri-check-line"></i>
+              <span>Complete Discharge & Pair Device</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+    <!-- 7. FOOTER DISCLAIMER -->
+    <footer class="app-footer">
+      <p style="font-weight: 700; color: #fbbf24; margin-bottom: 4px; font-size: 13px;">
+        Educational Prototype — Not for Diagnosis
+      </p>
+      <p style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
+        Academic research platform designed to optimize hospital bed turnover by moving stabilized observational care into home settings with real-time ESP32 biosignal telemetry.
+      </p>
+      <p style="margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #475569;">
+        ESP32 Home Patient Monitoring Platform • Central Doctor Portal v1.2
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- PATIENT DIRECTORY CONTROLLER SCRIPT -->
+  <script src="js/patients.js"></script>
+</body>
+</html>

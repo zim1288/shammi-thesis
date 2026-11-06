@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Clinical Telemetry — OTP Verification</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <!-- Dedicated OTP Verification CSS (from d:\code design\OTP Verification) -->
+  <link rel="stylesheet" href="assets/css/otp.css">
+
+  <!-- EmailJS SDK Integration -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    window.EMAILJS_CONFIG = {
+      publicKey: "YOUR_EMAILJS_PUBLIC_KEY",
+      serviceId: "YOUR_SERVICE_ID",
+      templateId: "YOUR_TEMPLATE_ID"
+    };
+
+    if (window.emailjs && window.EMAILJS_CONFIG.publicKey !== "YOUR_EMAILJS_PUBLIC_KEY") {
+      emailjs.init(window.EMAILJS_CONFIG.publicKey);
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Ambient Cursor Glow & Noise -->
+  <div class="pointer-light" id="pointerLight"></div>
+  <div class="noise"></div>
+
+  <!-- Top Navigation & Prototype Notice -->
+  <header class="top-nav-bar">
+    <a href="auth.html" class="back-pill">
+      <i class="ri-arrow-left-line"></i>
+      <span>Back to Authentication</span>
+    </a>
+    <div class="prototype-tag" style="font-size:12px; padding:6px 14px; border-radius:999px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.25); color:#fca5a5;">
+      ⚠️ Educational Prototype — Not for Diagnosis
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       MAIN OTP VERIFICATION VAULT CARD
+       ========================================================================= -->
+  <main class="card" id="card">
+    <h1 id="title">Enter Access Code</h1>
+    <p class="subtitle" id="subtitle">A 4-digit verification code has been dispatched to your email.</p>
+
+    <div class="stage" id="stage">
+      <!-- 4-Digit Input Stage -->
+      <div class="input-stage" id="inputStage">
+        <input type="text" class="input-pill" maxlength="1" inputmode="numeric" aria-label="Digit 1" data-index="0" autofocus>
+        <input type="text" class="input-pill" maxlength="1" inputmode="numeric" aria-label="Digit 2" data-index="1">
+        <input type="text" class="input-pill" maxlength="1" inputmode="numeric" aria-label="Digit 3" data-index="2">
+        <input type="text" class="input-pill" maxlength="1" inputmode="numeric" aria-label="Digit 4" data-index="3">
+      </div>
+
+      <!-- Orbit Physics Ring Layer -->
+      <div class="orbit-layer" id="orbitLayer">
+        <div class="orbit-ring" id="orbitRing"></div>
+      </div>
+
+      <!-- Loading Counter (0-100%) -->
+      <div class="loading-wrap" id="loadingWrap">
+        <div class="loading-core">
+          <div class="loading-ring"></div>
+          <div class="loading-pulse"></div>
+          <div class="loading-inner" id="loadingPercent">0</div>
+        </div>
+      </div>
+
+      <!-- Success Vault & Confetti Burst Layer -->
+      <div class="success-wrap" id="successWrap">
+        <div class="success-flash"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="success-vault">
+          <svg class="checkmark" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="success-badge">Verified</div>
+      </div>
+    </div>
+
+    <!-- Error Prompt -->
+    <div class="error-msg" id="errorMsg">Incorrect code. Please try again.</div>
+
+    <!-- Resend Button -->
+    <button class="resend-btn" id="resendBtn">Didn't receive it? <span>Resend</span></button>
+  </main>
+
+  <!-- OTP Controller Script -->
+  <script src="assets/js/otp.js"></script>
+</body>
+</html>

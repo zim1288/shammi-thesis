@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinical Telemetry HUD — ESP32 Home Patient Monitoring System</title>
+  
+  <!-- Modern HUD Styling & Typography -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Production Authentication Guard (Enforces Login First) -->
+  <script src="js/auth_guard.js"></script>
+
+  <!-- Paho MQTT over WebSocket library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 1. MANDATORY NOTICE BANNER (Educational Prototype) -->
+    <div class="notice-banner">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pulse-dot"></span>
+        <span style="font-weight: 700; letter-spacing: 0.02em;">⚠️ Educational Prototype — Not for Diagnosis</span>
+        <span style="opacity: 0.6; font-size: 11px;">|</span>
+        <span style="font-size: 11px; opacity: 0.85;">Engineering Research Demonstration v1.2</span>
+      </div>
+      <div id="headerPatientTag" style="display: flex; align-items: center; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+        <span>PATIENT: <strong>ROBERT VANCE (#PT-8802)</strong></span>
+        <span>•</span>
+        <span>ORIGIN: <strong>ICU STEP-DOWN (BED 04)</strong></span>
+      </div>
+    </div>
+
+    <!-- 2. TOP HUD COMMAND BAR & NAVIGATION -->
+    <header class="top-header">
+      <div class="brand-section">
+        <div class="brand-icon-box">
+          <i class="ri-heart-pulse-fill"></i>
+        </div>
+        <div>
+          <h1 class="brand-title">
+            <span>Clinical Telemetry HUD</span>
+            <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399;">LIVE</span>
+          </h1>
+          <p class="brand-subtitle">ESP32 IoT Biosignal Telemetry • Continuous Multi-Sensor Acquisition</p>
+        </div>
+      </div>
+
+      <!-- Quick Telemetry Diagnostic Tags -->
+      <div class="header-telemetry-tags">
+        <div class="hud-pill">
+          <i class="ri-cpu-line" style="color: #38bdf8;"></i>
+          <span id="badgeDeviceStatus" class="status-badge status-online">
+            <span style="width:7px;height:7px;border-radius:50%;background:#34d399;display:inline-block"></span> 
+            ESP32 ONLINE
+          </span>
+        </div>
+
+        <div class="hud-pill highlight">
+          <i class="ri-broadcast-line" style="color: #06b6d4;"></i>
+          <span id="commModeBadge" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">Connecting Telemetry...</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="nav-links">
+        <a href="patients.html" class="nav-btn">
+          <i class="ri-hospital-line"></i>
+          <span>Patient Roster</span>
+        </a>
+        <a href="index.html" class="nav-btn active">
+          <i class="ri-dashboard-line"></i>
+          <span>Live HUD</span>
+        </a>
+        <a href="history.html" class="nav-btn">
+          <i class="ri-line-chart-line"></i>
+          <span>History & CSV</span>
+        </a>
+        <a href="alerts.html" class="nav-btn">
+          <i class="ri-alarm-warning-line"></i>
+          <span>Alerts</span> 
+          <span id="badgeActiveAlerts" style="background:#10b981;color:#fff;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;">0</span>
+        </a>
+        <!-- Logged-in Clinician Session & Logout -->
+        <div class="hud-pill" style="padding: 4px 6px 4px 12px; gap: 8px; border-color: rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.85);">
+          <i class="ri-user-star-line" style="color: #38bdf8; font-size: 14px;"></i>
+          <span id="navUserBadge" style="font-weight: 600; color: #e2e8f0; font-size: 12px;">Dr. S. Jenkins, MD</span>
+          <button type="button" id="btnNavLogout" class="nav-btn" style="padding: 5px 12px; font-size: 11px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;" title="End Active Session">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+        <a href="patients.html?open_add=1" class="nav-btn primary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: #fff; font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient &amp; Device</span>
+        </a>
+      </nav>
+    </header>
+
+    <!-- 2.5 ACTIVE PATIENT HERO PROFILE BANNER (Prominently Placed at the Top) -->
+    <section class="patient-hero-banner">
+      
+      <!-- Left: Patient Avatar & Demographics -->
+      <div class="patient-hero-main">
+        <div id="profilePatientAvatar" class="patient-hero-avatar">RV</div>
+        <div class="patient-hero-details">
+          <div class="patient-hero-title-row">
+            <h2 id="profilePatientName" class="patient-hero-name">Robert Vance</h2>
+            <span id="profilePatientCode" class="patient-hero-code">#PT-8802</span>
+            <span id="profilePatientRiskBadge" class="status-badge" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); font-size: 11px; padding: 3px 10px; border-radius: 999px;">
+              ● STABLE / LOW RISK
+            </span>
+          </div>
+
+          <div class="patient-hero-meta-row">
+            <span id="profilePatientMeta">
+              <i class="ri-user-line" style="color: #818cf8;"></i> 58 Yrs • Male
+            </span>
+            <span>•</span>
+            <span id="profilePatientWard">
+              <i class="ri-hotel-bed-line" style="color: #38bdf8;"></i> Ward: ICU Step-Down
+            </span>
+            <span>•</span>
+            <span id="profilePatientRoom">
+              <i class="ri-map-pin-2-line" style="color: #06b6d4;"></i> Bed 04 / Room 402
+            </span>
+            <span>•</span>
+            <span id="profilePatientDevice">
+              <i class="ri-cpu-line" style="color: #a5b4fc;"></i> Paired Node: ESP32-NODE-01
+            </span>
+          </div>
+
+          <p id="profilePatientNotes" style="font-size: 12px; color: #94a3b8; margin-top: 4px; line-height: 1.5; max-width: 750px;">
+            Post-CABG surgery recovery. Ward bed decongested for incoming emergency admissions. Continuous ECG & SpO₂ telemetry required.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Navigation back to Roster & Add New Patient -->
+      <div class="patient-hero-actions">
+        <a href="patients.html" class="nav-btn" style="font-size: 12px; padding: 9px 14px; background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12);">
+          <i class="ri-arrow-left-line"></i>
+          <span>Patient Roster</span>
+        </a>
+        <a href="patients.html?open_add=1" class="btn-manual-bp-pill" style="font-size: 12px; padding: 8px 16px;">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient</span>
+        </a>
+      </div>
+
+    </section>
+
+    <!-- 3. HERO VITALS TELEMETRY GRID (Spacious, Clear & Beautiful) -->
+    <section class="hero-vitals-grid">
+      
+      <!-- Tile 1: ECG Heart Rate (AD8232 Phosphor Green) -->
+      <div class="vital-hud-card card-ecg-theme">
+        <div class="vital-card-top">
+          <div class="vital-tag-group">
+            <span class="vital-name">
+              <i class="ri-heart-3-line"></i> ECG Heart Rate
+            </span>
+            <span class="vital-sensor-badge">AD8232 Lead II • R-Peak</span>
+          </div>
+          <div class="vital-icon-wrap">
+            <i class="ri-heart-pulse-fill"></i>
+          </div>
+        </div>
+
+        <div class="vital-value-row">
+          <span id="valEcgHr" class="vital-digital-num">--</span>
+          <span class="vital-unit-text">BPM</span>
+        </div>
+
+        <div class="vital-card-footer">
+          <span style="color: #34d399;">R-R Interval Analysis</span>
+          <span style="color: #6ee7b7; opacity: 0.8;">Normal: 60-100</span>
+        </div>
+      </div>
+
+      <!-- Tile 2: MAX30102 Pulse Rate (PPG Cyan - Strictly Separated) -->
+      <div class="vital-hud-card card-ppg-theme">
+        <div class="vital-card-top">
+          <div class="vital-tag-group">
+            <span class="vital-name">
+              <i class="ri-pulse-line"></i> MAX30102 Pulse
+            </span>
+            <span class="vital-sensor-badge">Optical Plethysmograph</span>
+          </div>
+          <div class="vital-icon-wrap">
+            <i class="ri-fingerprint-line"></i>
+          </div>
+        </div>
+
+        <div class="vital-value-row">
+          <span id="valMax30102Pr" class="vital-digital-num">--</span>
+          <span class="vital-unit-text">BPM</span>
+        </div>
+
+        <div class="vital-card-footer">
+          <span style="color: #22d3ee;">PPG Peripheral Flow</span>
+          <span style="color: #67e8f9; opacity: 0.8;">Independent PR</span>
+        </div>
+      </div>
+
+      <!-- Tile 3: SpO2 Blood Oxygen (Sky Blue) -->
+      <div class="vital-hud-card card-spo2-theme">
+        <div class="vital-card-top">
+          <div class="vital-tag-group">
+            <span class="vital-name">
+              <i class="ri-drop-line"></i> Blood Oxygen
+            </span>
+            <span class="vital-sensor-badge">SpO₂ Infrared Saturation</span>
+          </div>
+          <div class="vital-icon-wrap">
+            <i class="ri-water-percent-line"></i>
+          </div>
+        </div>
+
+        <div class="vital-value-row">
+          <span id="valSpo2" class="vital-digital-num">--</span>
+          <span class="vital-unit-text">%</span>
+        </div>
+
+        <div class="vital-card-footer">
+          <span style="color: #38bdf8;">Arterial Saturation</span>
+          <span style="color: #7dd3fc; opacity: 0.8;">Optimal &gt; 95%</span>
+        </div>
+      </div>
+
+      <!-- Tile 4: IR Skin Temperature (Amber) -->
+      <div class="vital-hud-card card-temp-theme">
+        <div class="vital-card-top">
+          <div class="vital-tag-group">
+            <span class="vital-name">
+              <i class="ri-infrared-thermometer-line"></i> IR Skin Temp
+            </span>
+            <span class="vital-sensor-badge">Non-contact Thermopile</span>
+          </div>
+          <div class="vital-icon-wrap">
+            <i class="ri-infrared-thermometer-fill"></i>
+          </div>
+        </div>
+
+        <div class="vital-value-row">
+          <span id="valTemp" class="vital-digital-num">--</span>
+          <span class="vital-unit-text">°C</span>
+        </div>
+
+        <div class="vital-card-footer">
+          <span id="valTempF" style="color: #f59e0b; font-weight: 600;">-- °F</span>
+          <span style="color: #fcd34d; opacity: 0.8;">Norm: 36.1-37.2°C</span>
+        </div>
+      </div>
+
+      <!-- Tile 5: Manual Blood Pressure (Indigo Soft - Strictly Separated) -->
+      <div class="vital-hud-card card-bp-theme">
+        <div class="vital-card-top">
+          <div class="vital-tag-group">
+            <span class="vital-name">
+              <i class="ri-stethoscope-line"></i> Blood Pressure
+            </span>
+            <span class="vital-sensor-badge">Manual Entry • NIBP</span>
+          </div>
+          <div class="vital-icon-wrap">
+            <i class="ri-heart-add-line"></i>
+          </div>
+        </div>
+
+        <div class="vital-value-row" style="gap: 3px;">
+          <span id="valBpSys" class="vital-digital-num">--</span>
+          <span style="font-size: 26px; font-weight: 700; color: #a5b4fc; font-family: 'JetBrains Mono', monospace;">/</span>
+          <span id="valBpDia" class="vital-digital-num">--</span>
+          <span class="vital-unit-text" style="margin-left: 4px;">mmHg</span>
+        </div>
+
+        <div class="vital-card-footer">
+          <span id="valBpMeta" style="color: #c7d2fe; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">No record today</span>
+          <button type="button" id="btnTileOpenBpModal" style="background:transparent; border:none; color: #a5b4fc; text-decoration: underline; font-weight: 600; cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+            <i class="ri-stethoscope-line"></i> + Log BP
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 4. PANORAMIC LIVE ECG OSCILLOSCOPE (Centerpiece Viewport) -->
+    <section class="ecg-console-card">
+      <div class="ecg-console-header">
+        <div class="ecg-channel-badge">
+          <span class="live-beacon"></span>
+          <span>ECG Oscilloscope Waveform</span>
+          <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #10b981; background: rgba(16,185,129,0.12); padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(16,185,129,0.3);">
+            AD8232 LEAD II (125 Hz)
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span style="font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #94a3b8;">
+            Sweep: <strong style="color: #e2e8f0;">25 mm/s</strong> • Scale: <strong style="color: #e2e8f0;">10 mm/mV</strong>
+          </span>
+          <button id="btnPauseEcg" class="nav-btn" style="padding: 6px 14px; font-size: 12px;">
+            <i class="ri-pause-circle-line"></i>
+            <span>Pause Waveform</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Oscilloscope Screen Canvas -->
+      <div class="ecg-viewport ecg-grid-overlay">
+        <div class="ecg-top-info">
+          <span>LEAD II • BIO-AMPLIFIER 125 SPS</span>
+          <span>REALTIME SYNCHRONIZED SWEEP</span>
+        </div>
+        <canvas id="liveEcgCanvas" width="1100" height="200" class="ecg-canvas"></canvas>
+      </div>
+
+      <div class="ecg-footer-info">
+        <span>Hardware Filter: Bandpass 0.5 Hz - 40 Hz • Notch 50/60 Hz</span>
+        <span>Electrodes: Right Arm (RA), Left Arm (LA), Right Leg (RL Reference)</span>
+      </div>
+    </section>
+
+    <!-- 5. LOWER 3-COLUMN DIAGNOSTIC & PATIENT CONSOLE (Balanced & Spacious) -->
+    <section class="diagnostics-grid">
+      
+      <!-- Column 1: Hardware & Radio Diagnostics -->
+      <div class="diag-card">
+        <div>
+          <div class="diag-card-header">
+            <span class="diag-title">
+              <i class="ri-router-line" style="color: #38bdf8;"></i> Hardware Telemetry
+            </span>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #94a3b8;">ESP32 DEVKIT</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-cpu-line"></i> Hardware Node
+            </span>
+            <span id="deviceMetaInfo" class="diag-value">ID: ESP32-NODE-01</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-time-line"></i> Last Packet Received
+            </span>
+            <span id="valLastUpdate" class="diag-value" style="color: #34d399;">Connecting...</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-wifi-line"></i> Radio Signal / RSSI
+            </span>
+            <span class="diag-value" style="color: #38bdf8;">-64 dBm (Good)</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-battery-charge-line"></i> Power Bus
+            </span>
+            <span class="diag-value" style="color: #f59e0b;">5.0V USB-C Main Bus</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">
+          Transmission: JSON via MQTT/WebSockets + REST Fallback
+        </div>
+      </div>
+
+      <!-- Column 2: Biosensor Leads & Contact Validity -->
+      <div class="diag-card">
+        <div>
+          <div class="diag-card-header">
+            <span class="diag-title">
+              <i class="ri-shield-check-line" style="color: #10b981;"></i> Signal Validity & Leads
+            </span>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #10b981;">INTEGRITY OK</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-pulse-fill"></i> ECG Lead Off (AD8232)
+            </span>
+            <span id="statusEcgLead" class="diag-value" style="color: #10b981;">● LO-/LO+ Normal</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-fingerprint-2-line"></i> MAX30102 PPG Probe
+            </span>
+            <span id="statusPpgFinger" class="diag-value" style="color: #06b6d4;">● Finger Detected</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-temp-hot-line"></i> IR Optical Contact
+            </span>
+            <span class="diag-value" style="color: #f59e0b;">● Calibrated OK</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-contrast-drop-2-line"></i> Signal-to-Noise Ratio
+            </span>
+            <span class="diag-value" style="color: #a5b4fc;">98.4% Nominal</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;">
+          Artifact rejection filter & lead-off auto flatline enabled
+        </div>
+      </div>
+
+      <!-- Column 3: Clinical Thresholds & Alarm Safeguards -->
+      <div class="diag-card">
+        <div>
+          <div class="diag-card-header">
+            <span class="diag-title">
+              <i class="ri-shield-cross-line" style="color: #a5b4fc;"></i> Clinical Thresholds
+            </span>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #10b981;">ACTIVE SAFEGUARDS</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-heart-pulse-line"></i> HR Safe Range
+            </span>
+            <span id="thresholdHrRange" class="diag-value" style="color: #10b981;">55 - 105 BPM</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-water-percent-line"></i> SpO₂ Critical Floor
+            </span>
+            <span id="thresholdSpo2Floor" class="diag-value" style="color: #38bdf8;">Min 94% Saturation</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-temp-hot-line"></i> Pyrexia Alert Level
+            </span>
+            <span id="thresholdTempCeil" class="diag-value" style="color: #f59e0b;">Max 37.8 °C</span>
+          </div>
+
+          <div class="diag-row">
+            <span class="diag-label">
+              <i class="ri-alarm-warning-line"></i> Automated Dispatch
+            </span>
+            <span class="diag-value" style="color: #a5b4fc;">Email + SMS Escalation</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <a href="alerts.html" style="font-size: 12px; color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+            <i class="ri-settings-4-line"></i>
+            <span>Adjust Alert Thresholds →</span>
+          </a>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 5.5 PATIENT MANUAL CLINICAL MEASUREMENTS & AUDIT HISTORY LOG -->
+    <section class="hud-card" style="margin-bottom: 30px;">
+      <div class="hud-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+        <div>
+          <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+            <i class="ri-history-line" style="color: #818cf8;"></i>
+            <span>Patient Manual Clinical Log &amp; Nurse Observations</span>
+          </div>
+          <p id="patientManualLogSubtitle" style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">
+            Audit-trailed physical measurements and bedside observations for active patient
+          </p>
+        </div>
+
+        <!-- The 2 buttons styled exactly like the user image! -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" id="btnOpenManualBpModal" class="btn-manual-bp-pill">
+            <i class="ri-stethoscope-line" style="font-size: 16px;"></i>
+            <span>Manual BP Entry</span>
+          </button>
+
+          <a id="btnExportCsvLink" href="../api/vitals/history.php?patient_id=PT-8802&format=csv&limit=500" target="_blank" class="btn-export-csv-pill">
+            <i class="ri-download-2-line" style="font-size: 15px;"></i>
+            <span>Export CSV</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Manual Clinical Log Table -->
+      <div style="overflow-x: auto; margin-top: 14px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;">
+              <th style="padding: 10px 14px;">Measurement Timestamp</th>
+              <th style="padding: 10px 14px;">Clinical Parameter</th>
+              <th style="padding: 10px 14px;">Reading (mmHg)</th>
+              <th style="padding: 10px 14px;">Pulse (BPM)</th>
+              <th style="padding: 10px 14px;">Posture &amp; Clinical Notes</th>
+              <th style="padding: 10px 14px;">Attending Clinician</th>
+              <th style="padding: 10px 14px;">Data Source</th>
+            </tr>
+          </thead>
+          <tbody id="patientManualLogTableBody">
+            <tr>
+              <td colspan="7" style="padding: 24px; text-align: center; color: #64748b;">
+                <i class="ri-loader-4-line" style="animation: spin 1s linear infinite;"></i> Loading patient clinical logs...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. FOOTER DISCLAIMER -->
+    <footer class="app-footer">
+      <p style="font-weight: 700; color: #fbbf24; margin-bottom: 4px; font-size: 13px;">
+        Educational Prototype — Not for Diagnosis
+      </p>
+      <p style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
+        This web application and connected ESP32 sensor hardware are developed strictly as an educational and academic research prototype for continuous biosignal acquisition evaluation. It does not replace professional medical instrumentation or diagnostic devices.
+      </p>
+      <p style="margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #475569;">
+        ESP32 Home Patient Monitoring System • Research Telemetry Console v1.2
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- =========================================================================
+       MANUAL BLOOD PRESSURE ENTRY MODAL (Scoped to Current Patient)
+       ========================================================================= -->
+  <div id="modalManualBp" class="modal-overlay">
+    <div class="modal-container" style="max-width: 520px;">
+      
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="kpi-icon-box" style="width: 40px; height: 40px; font-size: 20px; background: rgba(129, 140, 248, 0.15); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.3);">
+            <i class="ri-stethoscope-line"></i>
+          </div>
+          <div>
+            <h2 style="font-size: 18px; font-weight: 700; color: #ffffff;">Record Manual Blood Pressure</h2>
+            <p id="modalBpPatientSubtitle" style="font-size: 12px; color: #a5b4fc; margin-top: 2px;">
+              Active Patient: Loading...
+            </p>
+          </div>
+        </div>
+        <button type="button" id="btnCloseManualBpModal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="formManualBpModal" autocomplete="off">
+        
+        <!-- Hidden Inputs -->
+        <input type="hidden" id="bpModalPatientId" name="patient_id" value="">
+        <input type="hidden" id="bpModalCsrfToken" name="csrf_token" value="">
+
+        <!-- Patient Context Target Card -->
+        <div style="background: rgba(129, 140, 248, 0.08); border: 1px solid rgba(129, 140, 248, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; display: block;">Recording Measurement For</span>
+            <strong id="modalBpPatientName" style="color: #ffffff; font-size: 15px;">Robert Vance</strong>
+          </div>
+          <div style="text-align: right;">
+            <span id="modalBpPatientCode" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 6px; font-weight: 700;">#PT-8802</span>
+          </div>
+        </div>
+
+        <!-- Systolic & Diastolic Inputs -->
+        <div class="form-grid-2" style="margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="color: #a5b4fc;">Systolic BP (mmHg) *</label>
+            <input type="number" id="inputModalSys" class="form-control" placeholder="120" min="50" max="260" required style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: #e0e7ff;">
+            <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Normal range: 90 - 120</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="color: #a5b4fc;">Diastolic BP (mmHg) *</label>
+            <input type="number" id="inputModalDia" class="form-control" placeholder="80" min="30" max="160" required style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: #e0e7ff;">
+            <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Normal range: 60 - 80</span>
+          </div>
+        </div>
+
+        <!-- Pulse Rate & Cuff Location -->
+        <div class="form-grid-2" style="margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Manual Pulse Rate (BPM)</label>
+            <input type="number" id="inputModalPulse" class="form-control" placeholder="e.g. 74" min="30" max="220" style="font-family: 'JetBrains Mono', monospace;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Cuff Position & Posture</label>
+            <select id="inputModalPosture" class="form-control">
+              <option value="Left Arm - Sitting">Left Arm - Sitting</option>
+              <option value="Right Arm - Sitting">Right Arm - Sitting</option>
+              <option value="Left Arm - Supine (Bed)">Left Arm - Supine (Bed)</option>
+              <option value="Right Arm - Supine (Bed)">Right Arm - Supine (Bed)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Clinician & Timestamp -->
+        <div class="form-grid-2" style="margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="color: #a5b4fc;">Measurement Date & Time *</label>
+            <input type="datetime-local" id="inputModalMeasurementTime" class="form-control" required style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #ffffff; background: #0f172a;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Attending Clinician / Staff Name *</label>
+            <input type="text" id="inputModalStaff" class="form-control" placeholder="e.g. Dr. S. Jenkins / Staff Nurse" value="Dr. S. Jenkins" required>
+          </div>
+        </div>
+
+        <!-- Clinical Notes -->
+        <div class="form-group">
+          <label class="form-label">Observation Notes (Optional)</label>
+          <textarea id="inputModalNotes" class="form-control" rows="2" placeholder="e.g. Post-stabilization resting blood pressure. Cuff standard adult size."></textarea>
+        </div>
+
+        <!-- Feedback Alert Container -->
+        <div id="modalBpFeedback" style="display: none; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13px;"></div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" id="btnCancelManualBpModal" class="nav-btn" style="padding: 10px 18px;">
+            Cancel
+          </button>
+          <button type="submit" id="btnSubmitManualBp" class="nav-btn primary" style="padding: 10px 24px;">
+            <i class="ri-check-line"></i>
+            <span>Save BP Record</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- APPLICATION CONTROLLER SCRIPTS -->
+  <script src="js/config.js"></script>
+  <script src="js/ecg_canvas.js"></script>
+  <script src="js/manual_bp_modal.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

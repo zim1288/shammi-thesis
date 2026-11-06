@@ -1,0 +1,6 @@
+.git
+.gitignore
+.gemini
+tests
+*.log
+docker-compose*.yml

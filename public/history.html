@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historical Biosignals & Research CSV Export</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Production Authentication Guard (Enforces Login First) -->
+  <script src="js/auth_guard.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Notice Banner -->
+    <div class="notice-banner">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>⚠️</span>
+        <span>Educational Prototype — Not for Diagnosis</span>
+      </div>
+      <span style="font-size: 11px; font-family: monospace;">Research Analytics & Archival</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="top-header">
+      <div>
+        <h1 class="brand-title">Historical Telemetry & Dataset Export</h1>
+        <p class="brand-subtitle">Time-series vital signs archive for academic evaluation and algorithm verification</p>
+      </div>
+
+      <nav class="nav-links">
+        <a href="patients.html" class="nav-btn">
+          <i class="ri-hospital-line"></i>
+          <span>Patient Roster</span>
+        </a>
+        <a href="index.html" class="nav-btn">
+          <i class="ri-dashboard-line"></i>
+          <span>Live HUD</span>
+        </a>
+        <a href="history.html" class="nav-btn active">
+          <i class="ri-line-chart-line"></i>
+          <span>History & CSV</span>
+        </a>
+        <a href="alerts.html" class="nav-btn">
+          <i class="ri-alarm-warning-line"></i>
+          <span>Alerts</span>
+        </a>
+        <!-- Logged-in Clinician Session & Logout -->
+        <div class="hud-pill" style="padding: 4px 6px 4px 12px; gap: 8px; border-color: rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.85);">
+          <i class="ri-user-star-line" style="color: #38bdf8; font-size: 14px;"></i>
+          <span id="navUserBadge" style="font-weight: 600; color: #e2e8f0; font-size: 12px;">Dr. S. Jenkins, MD</span>
+          <button type="button" id="btnNavLogout" class="nav-btn" style="padding: 5px 12px; font-size: 11px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;" title="End Active Session">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+        <a href="patients.html?open_add=1" class="nav-btn primary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: #fff; font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient &amp; Device</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="hud-card" style="margin-bottom: 24px;">
+      <div class="hud-card-header">
+        <div>
+          <div class="card-title">📡 Continuous Biosignal Telemetry Records</div>
+          <p id="telemetrySubtitle" style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Real-time sensor stream archive from ESP32 node</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a id="btnDownloadTelemetryCsv" href="../api/vitals/history.php?patient_id=PT-8802&format=csv&limit=500" class="nav-btn primary" target="_blank">
+            📥 Download Biosignal CSV (500 pts)
+          </a>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid #1f2937; color: #9ca3af; font-size: 11px; text-transform: uppercase;">
+              <th style="padding: 10px;">ID</th>
+              <th style="padding: 10px;">Timestamp</th>
+              <th style="padding: 10px;">ECG HR (BPM)</th>
+              <th style="padding: 10px;">MAX30102 PR (BPM)</th>
+              <th style="padding: 10px;">SpO₂ (%)</th>
+              <th style="padding: 10px;">Temp (°C)</th>
+              <th style="padding: 10px;">ECG Leads</th>
+              <th style="padding: 10px;">Signal Quality</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr>
+              <td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">Loading dataset...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Section 2: Clinician Manual Observations & BP Log -->
+    <section class="hud-card" style="margin-bottom: 30px;">
+      <div class="hud-card-header">
+        <div>
+          <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+            <i class="ri-history-line" style="color: #818cf8;"></i>
+            <span>Manual Clinical Measurements &amp; Nurse Observations Log</span>
+          </div>
+          <p id="manualSubtitle" style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Audit-trailed physical vitals entered manually by attending medical staff</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a id="btnDownloadManualCsv" href="../api/blood_pressure/list.php?patient_id=PT-8802&format=csv" class="nav-btn" target="_blank">
+            📥 Download Manual BP CSV
+          </a>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid #1f2937; color: #9ca3af; font-size: 11px; text-transform: uppercase;">
+              <th style="padding: 10px;">Measurement Timestamp</th>
+              <th style="padding: 10px;">Parameter</th>
+              <th style="padding: 10px;">Reading (mmHg)</th>
+              <th style="padding: 10px;">Pulse</th>
+              <th style="padding: 10px;">Posture &amp; Clinical Notes</th>
+              <th style="padding: 10px;">Recorded By</th>
+              <th style="padding: 10px;">Data Source</th>
+            </tr>
+          </thead>
+          <tbody id="manualHistoryTableBody">
+            <tr>
+              <td colspan="7" style="padding: 20px; text-align: center; color: #64748b;">Loading clinical observations...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p style="font-weight: 600; color: #fbbf24;">Educational Prototype — Not for Diagnosis</p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const patientId = urlParams.get('patient_id') || APP_CONFIG.defaultPatientId;
+
+      const telemetryTableBody = document.getElementById('historyTableBody');
+      const manualTableBody    = document.getElementById('manualHistoryTableBody');
+      const btnTeleCsv         = document.getElementById('btnDownloadTelemetryCsv');
+      const btnManualCsv       = document.getElementById('btnDownloadManualCsv');
+
+      if (btnTeleCsv)   btnTeleCsv.href   = `../api/vitals/history.php?patient_id=${encodeURIComponent(patientId)}&format=csv&limit=500`;
+      if (btnManualCsv) btnManualCsv.href = `../api/blood_pressure/list.php?patient_id=${encodeURIComponent(patientId)}&format=csv`;
+
+      // 1. Fetch Continuous Telemetry
+      try {
+        const res = await fetch(`${APP_CONFIG.api.vitalsHistory}?patient_id=${encodeURIComponent(patientId)}&limit=50`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data.history) {
+            renderTelemetryTable(json.data.history);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load telemetry dataset:', err);
+      }
+
+      // 2. Fetch Manual Clinical Observations Log
+      try {
+        const res = await fetch(`${APP_CONFIG.api.manualBpList}?patient_id=${encodeURIComponent(patientId)}&limit=50`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data.records) {
+            renderManualTable(json.data.records);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load manual observations:', err);
+      }
+
+      function renderTelemetryTable(history) {
+        if (!history.length) {
+          telemetryTableBody.innerHTML = '<tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No continuous records logged yet.</td></tr>';
+          return;
+        }
+
+        telemetryTableBody.innerHTML = history.map(h => {
+          const rawTime = h.reading_timestamp || h.timestamp || h.created_at || 'Just now';
+          const formattedTime = (rawTime && rawTime !== 'Just now' && !isNaN(Date.parse(rawTime))) 
+            ? new Date(rawTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' }) 
+            : rawTime;
+
+          return `
+          <tr style="border-bottom: 1px solid #1f2937;">
+            <td style="padding: 10px; font-family: monospace; color: #64748b;">#${h.id}</td>
+            <td style="padding: 10px; font-family: monospace; color: #cbd5e1;">${formattedTime}</td>
+            <td style="padding: 10px; font-weight: bold; font-family: monospace; color: #10b981;">${h.ecg_heart_rate ?? '—'}</td>
+            <td style="padding: 10px; font-weight: bold; font-family: monospace; color: #06b6d4;">${h.max30102_pulse_rate ?? '—'}</td>
+            <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${h.spo2 ? h.spo2 + '%' : '—'}</td>
+            <td style="padding: 10px; font-family: monospace; color: #f59e0b;">${h.ir_temperature ? h.ir_temperature + ' °C' : '—'}</td>
+            <td style="padding: 10px;">
+              <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; ${h.ecg_lead_status === 'normal' ? 'background:rgba(16,185,129,0.15);color:#34d399;' : 'background:rgba(239,68,68,0.15);color:#f87171;'}">
+                ${h.ecg_lead_status}
+              </span>
+            </td>
+            <td style="padding: 10px; font-family: monospace; color: #9ca3af;">${h.signal_validity}</td>
+          </tr>
+        `;
+        }).join('');
+      }
+
+      function renderManualTable(records) {
+        if (!records.length) {
+          manualTableBody.innerHTML = '<tr><td colspan="7" style="padding: 20px; text-align: center; color: #64748b;">No manual clinical measurements logged yet for this patient.</td></tr>';
+          return;
+        }
+
+        manualTableBody.innerHTML = records.map(r => {
+          const rawTime = r.measurement_timestamp || r.created_at || 'Just now';
+          const formattedTime = (rawTime && rawTime !== 'Just now' && !isNaN(Date.parse(rawTime))) 
+            ? new Date(rawTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' }) 
+            : rawTime;
+
+          return `
+          <tr style="border-bottom: 1px solid #1f2937;">
+            <td style="padding: 10px; font-family: monospace; color: #cbd5e1;">${formattedTime}</td>
+            <td style="padding: 10px; color: #a5b4fc; font-weight: 600;">Blood Pressure (NIBP)</td>
+            <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #ffffff;">${r.systolic_bp} / ${r.diastolic_bp}</td>
+            <td style="padding: 10px; font-family: monospace; color: #38bdf8;">${r.pulse_rate ? r.pulse_rate + ' BPM' : '—'}</td>
+            <td style="padding: 10px; color: #9ca3af;">${r.notes || '—'}</td>
+            <td style="padding: 10px; color: #e2e8f0;">${r.recorded_by || 'Staff'}</td>
+            <td style="padding: 10px;"><span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(99,102,241,0.15); color: #a5b4fc;">manual_entry</span></td>
+          </tr>
+          `;
+        }).join('');
+      }
+    });
+  </script>
+</body>
+</html>

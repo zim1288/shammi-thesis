@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alert Management & Alarms — Patient Monitoring System</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/auth_guard.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Notice Banner -->
+    <div class="notice-banner">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span>⚠️</span>
+        <span>Educational Prototype — Not for Diagnosis</span>
+      </div>
+      <span style="font-size: 11px; font-family: monospace;">Physiological Alarm Console</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="top-header">
+      <div>
+        <h1 class="brand-title">Alert & Alarm Management</h1>
+        <p class="brand-subtitle">Automated physiological thresholds, lead detachments, and sensor disconnection events</p>
+      </div>
+
+      <nav class="nav-links">
+        <a href="patients.html" class="nav-btn">
+          <i class="ri-hospital-line"></i>
+          <span>Patient Roster</span>
+        </a>
+        <a href="index.html" class="nav-btn">
+          <i class="ri-dashboard-line"></i>
+          <span>Live HUD</span>
+        </a>
+        <a href="history.html" class="nav-btn">
+          <i class="ri-line-chart-line"></i>
+          <span>History & CSV</span>
+        </a>
+        <a href="alerts.html" class="nav-btn active">
+          <i class="ri-alarm-warning-line"></i>
+          <span>Alerts</span>
+        </a>
+        <!-- Logged-in Clinician Session & Logout -->
+        <div class="hud-pill" style="padding: 4px 6px 4px 12px; gap: 8px; border-color: rgba(99, 102, 241, 0.35); background: rgba(15, 23, 42, 0.85);">
+          <i class="ri-user-star-line" style="color: #38bdf8; font-size: 14px;"></i>
+          <span id="navUserBadge" style="font-weight: 600; color: #e2e8f0; font-size: 12px;">Dr. S. Jenkins, MD</span>
+          <button type="button" id="btnNavLogout" class="nav-btn" style="padding: 5px 12px; font-size: 11px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; cursor: pointer;" title="End Active Session">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+        <a href="patients.html?open_add=1" class="nav-btn primary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: #fff; font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35);">
+          <i class="ri-user-add-line"></i>
+          <span>+ Add Patient &amp; Device</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="hud-card">
+      <div class="hud-card-header">
+        <div class="card-title">🚨 System Alerts & Event Log</div>
+        <div style="display: flex; gap: 8px;">
+          <button id="filterActiveBtn" class="nav-btn active">Active Only</button>
+          <button id="filterAllBtn" class="nav-btn">All Events</button>
+        </div>
+      </div>
+
+      <div id="alertsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="padding: 20px; text-align: center; color: #64748b;">Loading alerts...</div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p style="font-weight: 600; color: #fbbf24;">Educational Prototype — Not for Diagnosis</p>
+    </footer>
+
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('alertsContainer');
+      const btnActive = document.getElementById('filterActiveBtn');
+      const btnAll = document.getElementById('filterAllBtn');
+      let currentActiveOnly = 1;
+
+      btnActive.addEventListener('click', () => {
+        currentActiveOnly = 1;
+        btnActive.classList.add('active');
+        btnAll.classList.remove('active');
+        loadAlerts();
+      });
+
+      btnAll.addEventListener('click', () => {
+        currentActiveOnly = 0;
+        btnAll.classList.add('active');
+        btnActive.classList.remove('active');
+        loadAlerts();
+      });
+
+      async function loadAlerts() {
+        try {
+          const res = await fetch(`${APP_CONFIG.api.alertsList}?patient_id=${APP_CONFIG.defaultPatientId}&active_only=${currentActiveOnly}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.data.alerts) {
+              renderAlerts(json.data.alerts);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function renderAlerts(alerts) {
+        if (!alerts.length) {
+          container.innerHTML = '<div style="padding: 30px; text-align: center; color: #34d399; background: #030712; border-radius: 8px;">✓ No unacknowledged alerts found. All patient vital parameters within baseline.</div>';
+          return;
+        }
+
+        container.innerHTML = alerts.map(a => `
+          <div class="alert-item ${a.severity}">
+            <div class="alert-title">
+              <span style="color: ${a.severity === 'critical' ? '#f87171' : '#fbbf24'}; font-weight: bold;">
+                ${a.severity.toUpperCase()}: ${a.message}
+              </span>
+              <span style="font-size: 11px; font-family: monospace; color: #9ca3af;">
+                ${a.created_at}
+              </span>
+            </div>
+            <div class="alert-desc" style="display:flex; justify-content:space-between; align-items:center; margin-top: 8px;">
+              <div>
+                <span>Threshold: <code style="color:#cbd5e1;">${a.threshold_value || 'N/A'}</code></span> • 
+                <span>Observed: <code style="color:#f87171;">${a.actual_value || 'N/A'}</code></span>
+              </div>
+              <div>
+                ${a.is_acknowledged == 1 
+                  ? `<span style="font-size: 11px; color: #34d399;">✓ Acknowledged (${a.acknowledged_by_name || 'Staff'})</span>`
+                  : `<button onclick="acknowledgeAlert(${a.id})" class="nav-btn primary" style="padding: 4px 10px; font-size: 11px;">Acknowledge</button>`
+                }
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      window.acknowledgeAlert = async function(id) {
+        try {
+          const res = await fetch(APP_CONFIG.api.alertAcknowledge, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alert_id: id })
+          });
+          const json = await res.json();
+          if (json.success) {
+            loadAlerts();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      loadAlerts();
+    });
+  </script>
+</body>
+</html>

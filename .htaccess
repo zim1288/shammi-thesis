@@ -1,0 +1,21 @@
+# ESP32 Home Patient Monitoring System - Production Apache / cPanel Configuration
+Options -Indexes
+DirectoryIndex index.php index.html
+
+# Prevent direct access to internal data storage directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^data_store(/.*)?$ - [F,L,NC]
+</IfModule>
+
+# Prevent direct access to sensitive file formats
+<FilesMatch "\.(json|env|log|git|md|yaml|yml|sql|bak|swp)$">
+    Require all denied
+</FilesMatch>
+
+# Enable CORS headers for IoT Hardware ingestion
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+</IfModule>
