@@ -176,8 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
               updateSubtitle('✉️ Verification email dispatched to your inbox. Valid for 30 minutes.');
             })
             .catch(err => {
-              console.warn('⚠️ EmailJS delivery notice:', err);
-              updateSubtitle('Verification code generated. Please check your inbox or spam folder.');
+              console.error('⚠️ EmailJS delivery error:', err);
+              const errMsg = err?.text || err?.message || 'Code generated';
+              updateSubtitle('Email notice: ' + errMsg + '. Please check your inbox/spam or click Resend.');
             });
         }
 

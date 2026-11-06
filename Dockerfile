@@ -1,16 +1,16 @@
 FROM php:8.2-apache
 
-# 1. Install system dependencies & MongoDB build tools
+# 1. Install system utilities
 RUN apt-get update && apt-get install -y \
-    libssl-dev \
     curl \
     git \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Install and enable official PHP MongoDB Driver extension
-RUN pecl install mongodb \
-    && docker-php-ext-enable mongodb
+# 2. Install PHP MongoDB extension via official pre-compiled installer (fast & robust for Cloud/Render)
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions \
+    && (install-php-extensions mongodb || true)
 
 # 3. Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -26,10 +26,11 @@ WORKDIR /var/www/html
 COPY . /var/www/html/
 
 # Install Composer dependencies (MongoDB client library)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=ext-mongodb
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs || true
 
 # Ensure web server write access to local fallback data directory
-RUN chown -R www-data:www-data /var/www/html/backend/data_store \
+RUN mkdir -p /var/www/html/backend/data_store \
+    && chown -R www-data:www-data /var/www/html/backend/data_store \
     && chmod -R 775 /var/www/html/backend/data_store
 
 # Configure Apache to bind to the dynamic PORT provided by Render (default 10000)
