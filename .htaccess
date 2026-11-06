@@ -2,10 +2,18 @@
 Options -Indexes
 DirectoryIndex index.php index.html
 
-# Prevent direct access to internal data storage directory
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^data_store(/.*)?$ - [F,L,NC]
+
+    # Prevent direct access to backend internal storage and source code
+    RewriteRule ^(backend/)?data_store(/.*)?$ - [F,L,NC]
+    RewriteRule ^backend/(src|config|database)(/.*)?$ - [F,L,NC]
+
+    # Map legacy /public/ URLs to /frontend/ for zero disruption
+    RewriteRule ^public/(.*)$ frontend/$1 [R=301,L,NC]
+
+    # Transparently route /api requests to backend/api
+    RewriteRule ^api/(.*)$ backend/api/$1 [L,QSA]
 </IfModule>
 
 # Prevent direct access to sensitive file formats

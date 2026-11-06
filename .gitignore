@@ -20,6 +20,7 @@ transcript*.jsonl
 
 # --- Runtime Temporary Data Stores (Auto-created on boot) ---
 data_store/active_otps.json
+backend/data_store/active_otps.json
 
 # --- Environment & Sensitive Credentials ---
 .env

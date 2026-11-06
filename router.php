@@ -7,7 +7,9 @@
  *   php -S localhost:8000 router.php
  *
  * Enforces:
- * - Strict 403 Forbidden protection on /data_store/ and sensitive files (.json, .env, .log, .md)
+ * - Strict 403 Forbidden protection on /backend/data_store/ and sensitive files (.json, .env, .log, .md)
+ * - Transparent mapping of /api/* -> backend/api/*
+ * - Backward-compatible mapping of /public/* -> frontend/*
  * - Safe routing for PHP APIs and public frontend static assets
  */
 
@@ -15,7 +17,8 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // 1. HARD SECURITY BLOCK: Deny any direct HTTP access to data_store or sensitive files
 if (
-    preg_match('#^/data_store(/.*)?$#i', $uri) ||
+    preg_match('#^/(backend/)?data_store(/.*)?$#i', $uri) ||
+    preg_match('#^/backend/(src|config|database)(/.*)?$#i', $uri) ||
     preg_match('#\.(json|env|log|sql|md|yaml|yml|bak|swp)$#i', $uri) ||
     preg_match('#(^|/)\.#', $uri) // hidden files (.git, .env)
 ) {
@@ -24,13 +27,29 @@ if (
     echo json_encode([
         'success'   => false,
         'ok'        => false,
-        'error'     => 'Access Denied: Direct browser access to internal data stores and configuration is strictly forbidden.',
+        'error'     => 'Access Denied: Direct browser access to internal data stores, source code, and configuration is strictly forbidden.',
         'timestamp' => date('c')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// 2. Direct existing static file or PHP script
+// 2. Map /api/* requests to backend/api/*
+if (preg_match('#^/api/(.*)$#', $uri, $matches)) {
+    $apiFile = __DIR__ . '/backend/api/' . $matches[1];
+    if (file_exists($apiFile) && pathinfo($apiFile, PATHINFO_EXTENSION) === 'php') {
+        require $apiFile;
+        exit;
+    }
+}
+
+// 3. Map legacy /public/* requests to frontend/* for zero disruption
+if (preg_match('#^/public/(.*)$#', $uri, $matches)) {
+    $target = '/frontend/' . $matches[1];
+    header("Location: {$target}", true, 301);
+    exit;
+}
+
+// 4. Direct existing static file or PHP script
 $filePath = __DIR__ . $uri;
 
 if ($uri !== '/' && file_exists($filePath)) {
@@ -52,5 +71,5 @@ if ($uri !== '/' && file_exists($filePath)) {
     return false;
 }
 
-// 3. Fallback to index.php
+// 5. Fallback to index.php
 require __DIR__ . '/index.php';

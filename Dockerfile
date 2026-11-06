@@ -11,8 +11,8 @@ WORKDIR /var/www/html
 COPY . /var/www/html/
 
 # Ensure web server has write access to data storage
-RUN chown -R www-data:www-data /var/www/html/data_store \
-    && chmod -R 775 /var/www/html/data_store
+RUN chown -R www-data:www-data /var/www/html/backend/data_store \
+    && chmod -R 775 /var/www/html/backend/data_store
 
 # Configure Apache to bind to the dynamic PORT provided by Render (default 10000)
 ENV PORT=10000

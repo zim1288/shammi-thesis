@@ -92,65 +92,14 @@ For thesis evaluators, academic supervisors, and testing:
 shammi thesis/
 ├── .dockerignore                     # Docker build exclusions
 ├── .gitignore                        # Git repository exclusions (secrets, brain, plans, private logs)
-├── .htaccess                         # Apache / cPanel security headers & direct data access denial
+├── .htaccess                         # Apache / cPanel security headers, API rewrites & access denial
 ├── Dockerfile                        # Production PHP 8.2 + Apache container for Render.com
-├── index.php                         # Root traffic router (enforces login-first)
-├── router.php                        # Local development security router (blocks /data_store/ HTTP access)
+├── index.php                         # Root traffic router (enforces login-first -> frontend/)
+├── router.php                        # Local development security router (blocks backend/data_store/ access)
 ├── render.yaml                       # Render.com Blueprint specification
 ├── README.md                         # Platform documentation & deployment guide
 │
-├── api/                              # Thin REST Controllers (JSON API)
-│   ├── alerts/                       # Alert listing & clinician acknowledgment
-│   │   ├── acknowledge.php
-│   │   └── list.php
-│   ├── auth/                         # Authentication & session endpoints
-│   │   ├── csrf.php                  # Cryptographic CSRF token issuer
-│   │   ├── login.php                 # Legacy login forwarder
-│   │   ├── logout.php                # Legacy logout forwarder
-│   │   ├── otp.php                   # OTP lifecycle manager (request, resend, verify, status)
-│   │   └── session.php               # Unified session controller (login, register, status, logout)
-│   ├── blood_pressure/               # Segregated manual clinical observations
-│   │   ├── list.php                  # Manual BP records & CSV export
-│   │   └── manual_entry.php          # CSRF-verified bedside manual submission
-│   ├── devices/                      # ESP32 hardware status & LWT heartbeat
-│   │   └── status.php
-│   ├── ingest/                       # Hardware ingestion endpoints (Bearer token protected)
-│   │   ├── ecg_batch.php             # High-speed ECG waveform batches (125 SPS)
-│   │   └── vitals.php                # Consolidated physiological vitals stream
-│   ├── patients/                     # Patient management & IoT pairing
-│   │   ├── create.php                # Discharge onboarding & hardware pairing
-│   │   └── list.php                  # Active roster & ward decongestion statistics
-│   └── vitals/                       # Dashboard telemetry aggregation
-│       ├── ecg_latest.php            # Latest waveform batch
-│       ├── history.php               # Time-series telemetry & research CSV export
-│       └── latest.php                # Single-patient aggregated telemetry
-│
-├── config/                           # Central Configuration
-│   ├── app.php                       # Timezone, CORS, security headers, session policies
-│   ├── mongodb.php                   # MongoDB connection parameters
-│   └── thresholds.php                # Medical safety alarm thresholds
-│
-├── data_store/                       # Flat-file database fallback (Atomic LOCK_EX)
-│   ├── .htaccess                     # Denies all direct HTTP browser access to data files
-│   ├── active_otps.json              # Active OTP sessions (auto-managed, ignored in git)
-│   ├── alerts.json                   # Physiological alarm history
-│   ├── devices.json                  # Registered ESP32 hardware nodes
-│   ├── ecg_batches.json              # Buffered ECG waveform arrays
-│   ├── manual_blood_pressure.json    # Segregated manual clinician records
-│   ├── patients.json                 # Patient directory & baseline clinical profiles
-│   ├── sensor_readings.json          # Continuous time-series sensor archive
-│   └── users.json                    # Hashed clinician accounts (bcrypt)
-│
-├── docs/                             # In-Depth Guides
-│   ├── API_DOCUMENTATION.md          # Full REST API endpoints & payload schemas
-│   ├── CPANEL_DEPLOYMENT.md          # cPanel public_html deployment instructions
-│   ├── MONGODB_SETUP.md              # MongoDB Atlas cluster setup guide
-│   └── MQTT_INTEGRATION.md           # MQTT topics, QoS, and broker configuration
-│
-├── mqtt_service/                     # Hardware Emulation Tools
-│   └── esp32_simulator.py            # Python biosignal generator (ECG, PPG, Temp)
-│
-├── public/                           # Web Application Client (Frontend)
+├── frontend/                         # Dedicated Frontend Client (UI, Dashboards & Visualizations)
 │   ├── alerts.html                   # Physiological alarms & notification management
 │   ├── auth.html                     # Sliding Doctor Login & Registration portal
 │   ├── history.html                  # Biosignals telemetry table & CSV export
@@ -160,8 +109,7 @@ shammi thesis/
 │   ├── assets/                       # Custom styles & controller scripts for Auth & OTP
 │   │   ├── css/                      # Dedicated auth.css & otp.css
 │   │   └── js/                       # Dedicated auth.js & otp.js
-│   ├── css/                          # Core HUD stylesheet
-│   │   └── styles.css
+│   ├── css/                          # Core HUD stylesheet (styles.css)
 │   └── js/                           # Modular Frontend Controllers
 │       ├── auth_guard.js             # Client-side session gatekeeper & badge manager
 │       ├── config.js                 # Frontend API endpoints & MQTT WebSocket settings
@@ -170,25 +118,59 @@ shammi thesis/
 │       ├── manual_bp_modal.js        # Decoupled Manual BP dialog & CSRF submission
 │       └── patients.js               # Patient directory, filtering, & device intake form
 │
-└── src/                              # Clean Layered OOP Architecture
-    ├── Core/                         # Foundational System Infrastructure
-    │   ├── MongoConnection.php       # Thread-safe Singleton MongoDB driver & JSON fallback
-    │   ├── Request.php               # HTTP request parser, XSS sanitizer & raw input extractor
-    │   ├── Response.php              # Standardized JSON response envelope (success + ok)
-    │   └── Security.php              # CSRF lifecycle manager & Bearer token gatekeeper
-    ├── Repositories/                 # Data Access Layer
-    │   ├── AlertRepository.php
-    │   ├── BloodPressureRepository.php
-    │   ├── DeviceRepository.php
-    │   ├── EcgBatchRepository.php
-    │   ├── OtpRepository.php         # Dedicated OTP storage & rate-limit manager
-    │   ├── PatientRepository.php
-    │   ├── UserRepository.php        # Dedicated clinician account manager & bcrypt verifier
-    │   └── VitalsRepository.php
-    └── Services/                     # Business Logic Layer
-        ├── AlertEngineService.php    # Automated physiological safety evaluation engine
-        ├── IngestionService.php      # Telemetry & waveform ingestion pipeline
-        └── TelemetryService.php      # Real-time dashboard data aggregator
+├── backend/                          # Dedicated Backend Architecture (APIs, OOP Services & Data)
+│   ├── api/                          # Thin REST Controllers (JSON API)
+│   │   ├── alerts/                   # Alert listing & clinician acknowledgment
+│   │   ├── auth/                     # Unified session & OTP lifecycle controllers
+│   │   ├── blood_pressure/           # Segregated manual clinical observations
+│   │   ├── devices/                  # ESP32 hardware status & LWT heartbeat
+│   │   ├── ingest/                   # Hardware ingestion endpoints (Bearer token protected)
+│   │   ├── patients/                 # Discharge onboarding & hardware pairing
+│   │   └── vitals/                   # Dashboard telemetry aggregation & research CSV export
+│   │
+│   ├── config/                       # Central Configuration
+│   │   ├── app.php                   # Timezone, CORS, security headers, session policies
+│   │   ├── mongodb.php               # MongoDB connection parameters
+│   │   └── thresholds.php            # Medical safety alarm thresholds
+│   │
+│   ├── data_store/                   # Flat-file database fallback (Atomic LOCK_EX)
+│   │   ├── .htaccess                 # Denies all direct HTTP browser access to data files
+│   │   ├── active_otps.json          # Active OTP sessions (auto-managed, ignored in git)
+│   │   ├── alerts.json               # Physiological alarm history
+│   │   ├── devices.json              # Registered ESP32 hardware nodes
+│   │   ├── ecg_batches.json          # Buffered ECG waveform arrays
+│   │   ├── manual_blood_pressure.json # Segregated manual clinician records
+│   │   ├── patients.json             # Patient directory & baseline clinical profiles
+│   │   ├── sensor_readings.json      # Continuous time-series sensor archive
+│   │   └── users.json                # Hashed clinician accounts (bcrypt)
+│   │
+│   ├── database/                     # Database schemas & reference scripts
+│   │   └── schema.sql                # Relational database schema reference
+│   │
+│   ├── mqtt_service/                 # Hardware Emulation Tools
+│   │   └── esp32_simulator.py        # Python biosignal generator (ECG, PPG, Temp)
+│   │
+│   └── src/                          # Clean Layered OOP Architecture
+│       ├── Core/                     # Foundational System Infrastructure
+│       │   ├── MongoConnection.php   # Thread-safe Singleton MongoDB driver & JSON fallback
+│       │   ├── Request.php           # HTTP request parser, XSS sanitizer & raw input extractor
+│       │   ├── Response.php          # Standardized JSON response envelope (success + ok)
+│       │   └── Security.php          # CSRF lifecycle manager & Bearer token gatekeeper
+│       ├── Repositories/             # Data Access Layer
+│       │   ├── AlertRepository.php
+│       │   ├── BloodPressureRepository.php
+│       │   ├── DeviceRepository.php
+│       │   ├── EcgBatchRepository.php
+│       │   ├── OtpRepository.php
+│       │   ├── PatientRepository.php
+│       │   ├── UserRepository.php
+│       │   └── VitalsRepository.php
+│       └── Services/                 # Business Logic Layer
+│           ├── AlertEngineService.php # Automated physiological safety evaluation engine
+│           ├── IngestionService.php  # Telemetry & waveform ingestion pipeline
+│           └── TelemetryService.php  # Real-time dashboard data aggregator
+│
+└── docs/                             # In-Depth Guides (cPanel, MongoDB, MQTT, APIs)
 ```
 
 ---
@@ -198,7 +180,7 @@ shammi thesis/
 To admit a patient for remote post-acute care and pair an ESP32 wearable node:
 
 1. **Access the Central Doctor Dashboard:**  
-   Navigate to `public/patients.html` after logging in.
+   Navigate to `frontend/patients.html` after logging in.
 2. **Open the Onboarding Modal:**  
    Click the **`+ Add Patient & Device`** button in the top navigation bar or directly above the patient roster table.
 3. **Fill Patient Demographics:**  
@@ -231,14 +213,14 @@ To admit a patient for remote post-acute care and pair an ESP32 wearable node:
    ```
    http://localhost:8000/
    ```
-   * Unauthenticated visitors are automatically routed to `public/auth.html`.
+   * Unauthenticated visitors are automatically routed to `frontend/auth.html`.
    * Log in using `doctor@hospital.gov.bd` / `Doctor@2026!`.
-   * Upon successful login, you are redirected to the Central Patient Directory (`public/patients.html`).
+   * Upon successful login, you are redirected to the Central Patient Directory (`frontend/patients.html`).
 
 3. **Run the ESP32 Hardware Simulator (Optional):**
    In a second terminal window, run:
    ```bash
-   python mqtt_service/esp32_simulator.py
+   python backend/mqtt_service/esp32_simulator.py
    ```
    The simulator continuously streams realistic 125 SPS ECG Lead-II waveforms, pulse rates, SpO₂, and body temperatures to the ingestion API.
 
