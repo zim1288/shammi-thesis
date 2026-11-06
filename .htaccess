@@ -1,4 +1,4 @@
-# ESP32 Home Patient Monitoring System - Production Apache Configuration
+# ESP32 Home Patient Monitoring System - Production Apache / cPanel Configuration
 Options -Indexes
 DirectoryIndex index.php index.html
 
@@ -12,17 +12,20 @@ DirectoryIndex index.php index.html
     # Map legacy /public/ URLs to /frontend/ for zero disruption
     RewriteRule ^public/(.*)$ frontend/$1 [R=301,L,NC]
 
-    # Clean REST API v1 Routing
-    RewriteRule ^api/v1/readings/?$ backend/api/ingest/vitals.php [L,QSA]
-    RewriteRule ^api/v1/ecg/?$ backend/api/ingest/ecg_batch.php [L,QSA]
-    RewriteRule ^api/v1/blood-pressure/?$ backend/api/blood_pressure/manual_entry.php [L,QSA]
-    RewriteRule ^api/v1/latest/?$ backend/api/vitals/latest.php [L,QSA]
-    RewriteRule ^api/v1/history/?$ backend/api/vitals/history.php [L,QSA]
-    RewriteRule ^api/v1/alerts/?$ backend/api/alerts/list.php [L,QSA]
-    RewriteRule ^api/v1/device/status/?$ backend/api/devices/status.php [L,QSA]
+    # Clean v1 REST API Routing
+    RewriteRule ^api/v1/readings/?$ backend/api/v1/readings.php [L,QSA]
+    RewriteRule ^api/v1/ecg/?$ backend/api/v1/ecg.php [L,QSA]
+    RewriteRule ^api/v1/blood-pressure/?$ backend/api/v1/blood_pressure.php [L,QSA]
+    RewriteRule ^api/v1/latest/?$ backend/api/v1/latest.php [L,QSA]
+    RewriteRule ^api/v1/history/?$ backend/api/v1/history.php [L,QSA]
+    RewriteRule ^api/v1/alerts/?$ backend/api/v1/alerts.php [L,QSA]
+    RewriteRule ^api/v1/device/status/?$ backend/api/v1/device_status.php [L,QSA]
 
-    # Fallback: Transparently route any other /api/* requests to backend/api/*
-    RewriteRule ^api/(.*)$ backend/api/$1 [L,QSA]
+    # General /api/ mapping to backend/api/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^api/(.*)\.php$ backend/api/$1.php [L,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^api/(.*)$ backend/api/$1.php [L,QSA]
 </IfModule>
 
 # Prevent direct access to sensitive file formats

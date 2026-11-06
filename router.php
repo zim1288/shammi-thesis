@@ -8,7 +8,8 @@
  *
  * Enforces:
  * - Strict 403 Forbidden protection on /backend/data_store/ and sensitive files (.json, .env, .log, .md)
- * - Transparent mapping of /api/* -> backend/api/*
+ * - Clean REST API routing for /api/v1/* (with or without .php)
+ * - Backward-compatible mapping of /api/* -> backend/api/*
  * - Backward-compatible mapping of /public/* -> frontend/*
  * - Safe routing for PHP APIs and public frontend static assets
  */
@@ -33,23 +34,46 @@ if (
     exit;
 }
 
-// 2. Map /api/* requests to backend/api/*
+// 2. Specific REST v1 Clean Route Mappings
+$v1Routes = [
+    '/api/v1/readings'        => __DIR__ . '/backend/api/v1/readings.php',
+    '/api/v1/ecg'             => __DIR__ . '/backend/api/v1/ecg.php',
+    '/api/v1/blood-pressure'  => __DIR__ . '/backend/api/v1/blood_pressure.php',
+    '/api/v1/latest'          => __DIR__ . '/backend/api/v1/latest.php',
+    '/api/v1/history'         => __DIR__ . '/backend/api/v1/history.php',
+    '/api/v1/alerts'          => __DIR__ . '/backend/api/v1/alerts.php',
+    '/api/v1/device/status'   => __DIR__ . '/backend/api/v1/device_status.php'
+];
+
+$normalizedUri = rtrim($uri, '/');
+if (isset($v1Routes[$normalizedUri])) {
+    require $v1Routes[$normalizedUri];
+    exit;
+}
+
+// 3. Map general /api/* requests to backend/api/* (supports with or without .php)
 if (preg_match('#^/api/(.*)$#', $uri, $matches)) {
-    $apiFile = __DIR__ . '/backend/api/' . $matches[1];
+    $subPath = $matches[1];
+    $apiFile = __DIR__ . '/backend/api/' . $subPath;
+
     if (file_exists($apiFile) && pathinfo($apiFile, PATHINFO_EXTENSION) === 'php') {
         require $apiFile;
         exit;
     }
+    if (file_exists($apiFile . '.php')) {
+        require $apiFile . '.php';
+        exit;
+    }
 }
 
-// 3. Map legacy /public/* requests to frontend/* for zero disruption
+// 4. Map legacy /public/* requests to frontend/* for zero disruption
 if (preg_match('#^/public/(.*)$#', $uri, $matches)) {
     $target = '/frontend/' . $matches[1];
     header("Location: {$target}", true, 301);
     exit;
 }
 
-// 4. Direct existing static file or PHP script
+// 5. Direct existing static file or PHP script
 $filePath = __DIR__ . $uri;
 
 if ($uri !== '/' && file_exists($filePath)) {
@@ -71,5 +95,5 @@ if ($uri !== '/' && file_exists($filePath)) {
     return false;
 }
 
-// 5. Fallback to index.php
+// 6. Fallback to index.php
 require __DIR__ . '/index.php';
