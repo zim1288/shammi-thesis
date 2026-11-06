@@ -4,11 +4,13 @@ namespace App\Services;
 require_once __DIR__ . '/../Repositories/DeviceRepository.php';
 require_once __DIR__ . '/../Repositories/VitalsRepository.php';
 require_once __DIR__ . '/../Repositories/EcgBatchRepository.php';
+require_once __DIR__ . '/../Repositories/PatientRepository.php';
 require_once __DIR__ . '/AlertEngineService.php';
 
 use App\Repositories\DeviceRepository;
 use App\Repositories\VitalsRepository;
 use App\Repositories\EcgBatchRepository;
+use App\Repositories\PatientRepository;
 
 /**
  * High-Level Telemetry & Waveform Ingestion Orchestrator
@@ -17,18 +19,35 @@ class IngestionService {
     private DeviceRepository $deviceRepo;
     private VitalsRepository $vitalsRepo;
     private EcgBatchRepository $ecgBatchRepo;
+    private PatientRepository $patientRepo;
     private AlertEngineService $alertEngine;
 
     public function __construct() {
         $this->deviceRepo   = new DeviceRepository();
         $this->vitalsRepo   = new VitalsRepository();
         $this->ecgBatchRepo = new EcgBatchRepository();
+        $this->patientRepo  = new PatientRepository();
         $this->alertEngine  = new AlertEngineService();
+    }
+
+    private function resolvePatientId(string $deviceUid, ?string $providedPatientId): string {
+        if (!empty($providedPatientId)) {
+            return $providedPatientId;
+        }
+        $device = $this->deviceRepo->findByUid($deviceUid);
+        if (!empty($device['assigned_patient_id'])) {
+            return $device['assigned_patient_id'];
+        }
+        $patient = $this->patientRepo->findByDeviceUid($deviceUid);
+        if (!empty($patient['id'])) {
+            return $patient['id'];
+        }
+        return 'PT-8802';
     }
 
     public function processVitals(array $payload): array {
         $deviceUid = $payload['device_uid'] ?? 'ESP32-NODE-01';
-        $patientId = $payload['patient_id'] ?? 'PT-8802';
+        $patientId = $this->resolvePatientId($deviceUid, $payload['patient_id'] ?? null);
 
         // 1. Update device online status & telemetry
         $this->deviceRepo->updateTelemetry($deviceUid, [
@@ -70,7 +89,7 @@ class IngestionService {
 
     public function processEcgBatch(array $payload): array {
         $deviceUid = $payload['device_uid'] ?? 'ESP32-NODE-01';
-        $patientId = $payload['patient_id'] ?? 'PT-8802';
+        $patientId = $this->resolvePatientId($deviceUid, $payload['patient_id'] ?? null);
         $samples   = $payload['samples'] ?? ($payload['raw_samples'] ?? []);
 
         $batchDoc = [

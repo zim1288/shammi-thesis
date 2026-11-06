@@ -21,6 +21,10 @@ class PatientRepository {
             ?: $this->db->findOne($this->collection, ['patient_code' => $id]);
     }
 
+    public function findByDeviceUid(string $deviceUid): ?array {
+        return $this->db->findOne($this->collection, ['assigned_device_uid' => $deviceUid]);
+    }
+
     public function getAll(array $filter = [], array $options = []): array {
         return $this->db->query($this->collection, $filter, $options);
     }
