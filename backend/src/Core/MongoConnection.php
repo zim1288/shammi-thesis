@@ -52,6 +52,18 @@ class MongoConnection {
         return $this->isConnected;
     }
 
+    public function getStatus(): array {
+        $isLocalDefault = (strpos(MONGO_URI, 'mongodb://127.0.0.1') !== false || strpos(MONGO_URI, 'localhost') !== false);
+        return [
+            'connected'         => $this->isConnected,
+            'storage_mode'      => $this->isConnected ? 'mongodb_atlas' : 'json_file_fallback',
+            'configured_uri'    => $isLocalDefault ? 'UNCONFIGURED (Defaulting to localhost:27017)' : 'CONFIGURED',
+            'php_ext_mongodb'   => extension_loaded('mongodb'),
+            'database_name'     => $this->dbName,
+            'hint'              => $this->isConnected ? 'Writing live to MongoDB Atlas!' : 'Set MONGO_URI in Render Environment Variables with your Atlas cluster connection string to enable live cloud database writes.'
+        ];
+    }
+
     /**
      * Convert MongoDB BSON document / stdClass to clean standard array
      */
