@@ -254,7 +254,13 @@ The repository includes a ready-to-deploy [`render.yaml`](file:///e:/New%20folde
 
 ---
 
-## 7. Hardware Ingestion API Specifications
+## 7. Hardware Ingestion API & Firmware Guide
+
+> [!TIP]
+> **Dedicated Embedded Firmware Guide & Ready-to-Flash Arduino Code:**
+> * 📖 Full Wiring, Pinout, Patient Mapping & Troubleshooting: [`docs/ESP32_FIRMWARE_HARDWARE_GUIDE.md`](docs/ESP32_FIRMWARE_HARDWARE_GUIDE.md)
+> * ⚡ Ready-to-Flash Arduino C++ Sketch (.ino): [`firmware/esp32_firmware/esp32_firmware.ino`](firmware/esp32_firmware/esp32_firmware.ino)
+
 
 ### Ingestion Authentication
 All hardware requests from ESP32 nodes must include the Bearer token:

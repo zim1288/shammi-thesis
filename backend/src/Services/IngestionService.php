@@ -41,13 +41,13 @@ class IngestionService {
         $readingDoc = [
             'patient_id'          => $patientId,
             'device_uid'          => $deviceUid,
-            'ecg_heart_rate'      => isset($payload['ecg_heart_rate']) ? (int)$payload['ecg_heart_rate'] : null,
-            'max30102_pulse_rate' => isset($payload['max30102_pulse_rate']) ? (int)$payload['max30102_pulse_rate'] : null,
+            'ecg_heart_rate'      => isset($payload['ecg_heart_rate']) ? (int)$payload['ecg_heart_rate'] : (isset($payload['heart_rate']) ? (int)$payload['heart_rate'] : null),
+            'max30102_pulse_rate' => isset($payload['max30102_pulse_rate']) ? (int)$payload['max30102_pulse_rate'] : (isset($payload['pulse_rate']) ? (int)$payload['pulse_rate'] : null),
             'spo2'                => isset($payload['spo2']) ? (float)$payload['spo2'] : null,
-            'ir_temperature'      => isset($payload['ir_temperature']) ? (float)$payload['ir_temperature'] : null,
-            'ecg_lead_status'     => $payload['ecg_lead_status'] ?? 'normal',
+            'ir_temperature'      => isset($payload['ir_temperature']) ? (float)$payload['ir_temperature'] : (isset($payload['temperature']) ? (float)$payload['temperature'] : null),
+            'ecg_lead_status'     => $payload['ecg_lead_status'] ?? ($payload['lead_status'] ?? 'normal'),
             'ppg_finger_detected' => isset($payload['ppg_finger_detected']) ? (int)$payload['ppg_finger_detected'] : 1,
-            'signal_validity'     => (($payload['ecg_lead_status'] ?? 'normal') === 'normal' && ($payload['ppg_finger_detected'] ?? 1) == 1) ? 'valid' : 'degraded',
+            'signal_validity'     => ((($payload['ecg_lead_status'] ?? ($payload['lead_status'] ?? 'normal')) === 'normal') && ($payload['ppg_finger_detected'] ?? 1) == 1) ? 'valid' : 'degraded',
             'battery_level'       => $payload['battery_level'] ?? null,
             'wifi_rssi'           => $payload['wifi_rssi'] ?? null,
             'timestamp'           => $payload['timestamp'] ?? date('c'),
@@ -71,7 +71,7 @@ class IngestionService {
     public function processEcgBatch(array $payload): array {
         $deviceUid = $payload['device_uid'] ?? 'ESP32-NODE-01';
         $patientId = $payload['patient_id'] ?? 'PT-8802';
-        $samples   = $payload['samples'] ?? [];
+        $samples   = $payload['samples'] ?? ($payload['raw_samples'] ?? []);
 
         $batchDoc = [
             'patient_id'     => $patientId,

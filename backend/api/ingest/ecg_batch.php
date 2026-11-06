@@ -25,9 +25,12 @@ if (!Security::checkIngestAuthorization($request)) {
 
 $payload = $request->getBody();
 
-if (empty($payload['samples']) || !is_array($payload['samples'])) {
-    Response::error('Samples array is required.', 422);
+$sampleData = $payload['samples'] ?? $payload['raw_samples'] ?? [];
+if (empty($sampleData) || !is_array($sampleData)) {
+    Response::error('Samples array is required (key: "samples" or "raw_samples").', 422);
 }
+// Normalize key for downstream service
+$payload['samples'] = $sampleData;
 
 $ingestionService = new IngestionService();
 $result = $ingestionService->processEcgBatch($payload);
