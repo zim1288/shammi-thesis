@@ -104,12 +104,29 @@ class MongoConnection {
     }
 
     /**
+     * Map filter fields (e.g. converting 'id' to MongoDB '_id' ObjectId)
+     */
+    private function prepareFilter(array $filter): array {
+        $mongoFilter = $filter;
+        if (isset($mongoFilter['id'])) {
+            if (is_string($mongoFilter['id']) && preg_match('/^[a-f\d]{24}$/i', $mongoFilter['id'])) {
+                try {
+                    $mongoFilter['_id'] = new ObjectId($mongoFilter['id']);
+                    unset($mongoFilter['id']);
+                } catch (\Throwable $e) {}
+            }
+        }
+        return $mongoFilter;
+    }
+
+    /**
      * Query Documents
      */
     public function query(string $collection, array $filter = [], array $options = []): array {
         if ($this->isConnected && $this->manager) {
             try {
-                $query = new Query($filter, $options);
+                $mongoFilter = $this->prepareFilter($filter);
+                $query = new Query($mongoFilter, $options);
                 $cursor = $this->manager->executeQuery("{$this->dbName}.{$collection}", $query);
                 $results = [];
                 foreach ($cursor as $doc) {
@@ -166,8 +183,9 @@ class MongoConnection {
     public function update(string $collection, array $filter, array $updateData, array $options = ['multi' => false]): int {
         if ($this->isConnected && $this->manager) {
             try {
+                $mongoFilter = $this->prepareFilter($filter);
                 $bulk = new BulkWrite();
-                $bulk->update($filter, ['$set' => $updateData], $options);
+                $bulk->update($mongoFilter, ['$set' => $updateData], $options);
                 $result = $this->manager->executeBulkWrite("{$this->dbName}.{$collection}", $bulk);
                 return $result->getModifiedCount();
             } catch (MongoDriverException $e) {
