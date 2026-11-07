@@ -25,14 +25,15 @@ if (session_status() === PHP_SESSION_NONE) {
 // Mandatory Prototype Notice
 define('SYSTEM_NOTICE', 'Educational Prototype — Not for Diagnosis');
 
-// API Ingestion Bearer Token (ESP32 and MQTT bridge use this to authenticate)
-define('API_INGEST_KEY', 'esp32_research_secret_token_2026');
+// API Ingestion Bearer Token (Loaded securely from Render Environment Variables)
+define('API_INGEST_KEY', getenv('API_INGEST_KEY') ?: '');
 
 // CORS and Security Headers helper
 function setGlobalCorsHeaders() {
     if (PHP_SAPI !== 'cli') {
         header("Content-Type: application/json; charset=UTF-8");
-        header("Access-Control-Allow-Origin: *");
+        $origin = getenv('CORS_ALLOWED_ORIGIN') ?: '*';
+        header("Access-Control-Allow-Origin: " . $origin);
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
         header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token");
         header("X-Content-Type-Options: nosniff");

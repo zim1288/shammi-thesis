@@ -44,15 +44,22 @@ class Security {
 
     /**
      * Verify Bearer API Ingest Token for ESP32 hardware and MQTT daemon
+     * Validates against Render environment variable API_INGEST_KEY with constant-time equality
      */
     public static function checkIngestAuthorization(Request $request): bool {
         $authHeader = $request->getHeader('Authorization', '');
-        if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return in_array($matches[1], [
-                API_INGEST_KEY,
-                'esp32_research_secret_token_2026',
-                'esp32_clinical_token_2026'
-            ], true);
+        if (preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
+            $token = $matches[1];
+            $expectedKey = getenv('API_INGEST_KEY') ?: API_INGEST_KEY;
+
+            if (!empty($expectedKey) && hash_equals($expectedKey, $token)) {
+                return true;
+            }
+
+            // Local development fallback if no environment variable is configured
+            if (empty($expectedKey) && in_array($token, ['dev_secret_token_local', 'esp32_research_secret_token_2026'], true)) {
+                return true;
+            }
         }
         return false;
     }

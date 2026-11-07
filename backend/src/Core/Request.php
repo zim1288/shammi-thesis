@@ -61,6 +61,14 @@ class Request {
                 return $val;
             }
         }
+        // Fallback for Apache/FastCGI/CGI where headers are stored in $_SERVER
+        $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+        if (isset($_SERVER[$serverKey])) {
+            return $_SERVER[$serverKey];
+        }
+        if (strcasecmp($name, 'Authorization') === 0 && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
         return $default;
     }
 

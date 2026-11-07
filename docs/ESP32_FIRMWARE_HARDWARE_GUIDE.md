@@ -106,7 +106,7 @@ When your firmware sends sensor data, the backend matches the `device_uid` and `
 ### Authentication Header
 Every HTTP POST from the ESP32 **must** include this header:
 ```http
-Authorization: Bearer esp32_research_secret_token_2026
+Authorization: Bearer <YOUR_API_INGEST_KEY>
 ```
 *(The backend also accepts `Bearer esp32_clinical_token_2026` for backward compatibility).*
 
@@ -246,7 +246,7 @@ Before touching the hardware, you can test the cloud endpoint directly from your
 ```bash
 curl -X POST "https://shammi-thesis.onrender.com/api/v1/readings" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer esp32_research_secret_token_2026" \
+  -H "Authorization: Bearer <YOUR_API_INGEST_KEY>" \
   -d '{
     "device_uid": "ESP32-NODE-01",
     "patient_id": "PT-8802",

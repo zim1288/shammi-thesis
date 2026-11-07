@@ -5,6 +5,7 @@ Generates realistic biosignals (ECG Lead-II batches, MAX30102 PPG, IR Temp)
 and publishes via MQTT or directly invokes the PHP HTTP ingestion API.
 """
 
+import os
 import time
 import math
 import json
@@ -17,7 +18,7 @@ DEVICE_UID = "ESP32-NODE-01"
 PATIENT_ID = "PT-8802"
 API_URL = "http://localhost:8000/api/ingest/vitals.php"
 ECG_BATCH_URL = "http://localhost:8000/api/ingest/ecg_batch.php"
-API_KEY = "esp32_research_secret_token_2026"
+API_KEY = os.getenv("API_INGEST_KEY", "dev_secret_token_local")
 
 SAMPLE_RATE_HZ = 125
 BATCH_INTERVAL_SEC = 1.0  # Send 1 batch every 1 second (125 samples)

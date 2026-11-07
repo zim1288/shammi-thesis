@@ -11,12 +11,13 @@ class UserRepository {
     public function __construct() {
         $this->filePath = __DIR__ . '/../../data_store/users.json';
         if (!file_exists($this->filePath)) {
+            $initialPassword = getenv('INITIAL_DOCTOR_PASSWORD') ?: 'Doctor@2026!';
             $defaultUsers = [
                 [
                     'id'            => 'USR-001',
                     'username'      => 'doctor@hospital.gov.bd',
                     'email'         => 'doctor@hospital.gov.bd',
-                    'password_hash' => password_hash('Doctor@2026!', PASSWORD_DEFAULT),
+                    'password_hash' => password_hash($initialPassword, PASSWORD_DEFAULT),
                     'full_name'     => 'Dr. S. Jenkins, MD',
                     'role'          => 'attending_physician',
                     'ward'          => 'ICU Step-Down',
@@ -66,30 +67,14 @@ class UserRepository {
     }
 
     /**
-     * Verify credentials against bcrypt hash (with supervisor test fallback)
+     * Verify credentials strictly against bcrypt hash
      */
     public function verifyCredentials(string $identifier, string $plainPassword): ?array {
         $user = $this->findByUsernameOrEmail($identifier);
 
-        if ($user) {
-            if (!empty($user['password_hash']) && password_verify($plainPassword, $user['password_hash'])) {
+        if ($user && !empty($user['password_hash'])) {
+            if (password_verify($plainPassword, $user['password_hash'])) {
                 return $user;
-            }
-            // Educational convenience fallback for default password
-            if ($plainPassword === 'Doctor@2026!' || $plainPassword === 'Password123!') {
-                return $user;
-            }
-        } else {
-            // Thesis supervisor default credentials fallback
-            if (($identifier === 'doctor@hospital.gov.bd' || $identifier === 'admin') && 
-                ($plainPassword === 'Doctor@2026!' || $plainPassword === 'Password123!')) {
-                return [
-                    'id'        => 'USR-001',
-                    'username'  => $identifier,
-                    'email'     => $identifier,
-                    'full_name' => 'Dr. S. Jenkins, MD',
-                    'role'      => 'attending_physician'
-                ];
             }
         }
 

@@ -24,6 +24,11 @@ transcript*.jsonl
 data_store/active_otps.json
 backend/data_store/active_otps.json
 
+# --- Hardware & Firmware Private Configs ---
+firmware/**/config.h
+!firmware/**/config.h.example
+*.local.h
+
 # --- Environment & Sensitive Credentials ---
 .env
 .env.*

@@ -1,0 +1,27 @@
+/**
+ * ESP32 Hardware Configuration Template
+ * 
+ * INSTRUCTIONS FOR HARDWARE ENGINEER:
+ * 1. Copy this file and save it as "config.h" in this same directory.
+ * 2. Put your real Wi-Fi SSID, Password, and Render API Bearer Token in "config.h".
+ * 3. Never commit "config.h" to Git (it is already in .gitignore).
+ */
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Wi-Fi Access Point Credentials
+#define WIFI_SSID        "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD    "YOUR_WIFI_PASSWORD"
+
+// Cloud API Endpoints
+#define SERVER_URL_VITALS "https://shammi-thesis.onrender.com/api/v1/readings"
+#define SERVER_URL_ECG    "https://shammi-thesis.onrender.com/api/v1/ecg"
+
+// Ingestion Bearer Token (Matches Render API_INGEST_KEY environment variable)
+#define API_BEARER_TOKEN  "YOUR_API_INGEST_KEY_HERE"
+
+// Device & Patient Mapping (Must match active patient on Doctor Portal)
+#define DEVICE_UID        "ESP32-NODE-01"
+#define PATIENT_ID        "PT-8802"
+
+#endif // CONFIG_H

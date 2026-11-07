@@ -14,18 +14,21 @@
   <!-- Dedicated OTP Verification CSS (from d:\code design\OTP Verification) -->
   <link rel="stylesheet" href="assets/css/otp.css">
 
-  <!-- EmailJS SDK Integration -->
+  <!-- EmailJS SDK Integration (Loaded dynamically via Render Environment Variables) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    window.EMAILJS_CONFIG = {
-      publicKey: "S-Rf-rtEkTugqgxM4",
-      serviceId: "service_gifq25t",
-      templateId: "template_00wlmlh"
-    };
-
-    if (window.emailjs && window.EMAILJS_CONFIG.publicKey) {
-      emailjs.init(window.EMAILJS_CONFIG.publicKey);
-    }
+    window.EMAILJS_CONFIG = window.EMAILJS_CONFIG || {};
+    fetch('../api/auth/config.php')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data?.emailjs) {
+          window.EMAILJS_CONFIG = json.data.emailjs;
+          if (window.emailjs && window.EMAILJS_CONFIG.publicKey) {
+            emailjs.init(window.EMAILJS_CONFIG.publicKey);
+          }
+        }
+      })
+      .catch(err => console.warn('Could not load dynamic EmailJS config:', err));
   </script>
 </head>
 <body>

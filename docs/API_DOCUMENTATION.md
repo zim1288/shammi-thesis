@@ -10,12 +10,12 @@ This document specifies the frozen **API Contract (v1)** for independent develop
 The system uses separated authentication models tailored for IoT hardware vs. human clinicians:
 
 ### A. ESP32 Firmware Authentication (Pre-Shared Bearer Token)
-* All ESP32 HTTP requests must include the persistent research API key in the standard `Authorization` header:
+* All ESP32 HTTP requests must include the research API key in the standard `Authorization` header:
   ```http
-  Authorization: Bearer esp32_research_secret_token_2026
+  Authorization: Bearer <YOUR_API_INGEST_KEY>
   Content-Type: application/json
   ```
-* **Firmware Configuration:** Hardcoded as a constant `#define API_KEY "esp32_research_secret_token_2026"` in the firmware header file or configured in non-volatile flash (NVS).
+* **Firmware Configuration:** Defined in your private `config.h` file (`#define API_BEARER_TOKEN "..."`), matched against Render's `API_INGEST_KEY`.
 * **Backend Validation:** Validated via constant-time comparison in `App\Core\Security::checkIngestAuthorization($request)` against `API_INGEST_KEY` or the `API_KEY` environment variable.
 
 ### B. Web Clinician Authentication (Session + Anti-CSRF Token)
@@ -46,7 +46,7 @@ Ingests periodic low-frequency physiological vitals from the ESP32 (MAX30102 PPG
 * **Headers:**
   ```http
   Content-Type: application/json
-  Authorization: Bearer esp32_research_secret_token_2026
+  Authorization: Bearer <YOUR_API_INGEST_KEY>
   ```
 * **Request Payload (JSON):**
   ```json
@@ -88,7 +88,7 @@ Ingests chunks of high-speed ECG Lead-II waveform samples collected by the AD823
 * **Headers:**
   ```http
   Content-Type: application/json
-  Authorization: Bearer esp32_research_secret_token_2026
+  Authorization: Bearer <YOUR_API_INGEST_KEY>
   ```
 * **Request Payload (JSON):**
   ```json
@@ -308,7 +308,7 @@ Provides hardware health query and keepalive heartbeats.
   }
   ```
 * **POST (Heartbeat update from ESP32):**
-  * Headers: `Authorization: Bearer esp32_research_secret_token_2026`
+  * Headers: `Authorization: Bearer <YOUR_API_INGEST_KEY>`
   * Body: `{"device_uid": "ESP32-NODE-01", "status": "online"}`
 
 ---

@@ -79,10 +79,10 @@ The system is designed to facilitate safe, post-acute remote patient observation
 
 For thesis evaluators, academic supervisors, and testing:
 
-| Role | Username / Email | Password | Access Scope |
+| Role | Username / Identifier | Access Credentials | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Attending Clinician** | `doctor@hospital.gov.bd` | `Doctor@2026!` | Central Dashboard, Dedicated HUD, Alerts, Manual Entry |
-| **IoT Node Ingestion** | `Authorization: Bearer esp32_research_secret_token_2026` | N/A | Hardware Vitals & Waveform Batch Ingestion |
+| **Attending Clinician** | `doctor@hospital.gov.bd` | Configured via `INITIAL_DOCTOR_PASSWORD` or OTP registration | Central Dashboard, Dedicated HUD, Alerts, Manual Entry |
+| **IoT Node Ingestion** | `Authorization: Bearer <TOKEN>` | Configured via Render `API_INGEST_KEY` | Hardware Vitals & Waveform Batch Ingestion |
 
 ---
 
@@ -263,9 +263,9 @@ The repository includes a ready-to-deploy [`render.yaml`](file:///e:/New%20folde
 
 
 ### Ingestion Authentication
-All hardware requests from ESP32 nodes must include the Bearer token:
+All hardware requests from ESP32 nodes must include the Bearer token configured in your Render environment:
 ```http
-Authorization: Bearer esp32_research_secret_token_2026
+Authorization: Bearer <YOUR_API_INGEST_KEY>
 Content-Type: application/json
 ```
 

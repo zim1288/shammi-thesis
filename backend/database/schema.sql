@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS `alert_history` (
 -- SEED DATA (For educational/research testing)
 -- Default Login:
 -- Username: admin
--- Password: Password123!  (Hash generated via password_hash('Password123!', PASSWORD_BCRYPT))
+-- Password configured via INITIAL_DOCTOR_PASSWORD environment variable
 -- ============================================================================
 
 INSERT INTO `user_accounts` (`id`, `username`, `email`, `password_hash`, `full_name`, `role`) VALUES

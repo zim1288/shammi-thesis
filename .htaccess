@@ -5,6 +5,10 @@ DirectoryIndex index.php index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Pass Authorization header to PHP in FastCGI / Apache environments
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
     # Prevent direct access to backend internal storage and source code
     RewriteRule ^(backend/)?data_store(/.*)?$ - [F,L,NC]
     RewriteRule ^backend/(src|config|database)(/.*)?$ - [F,L,NC]

@@ -108,6 +108,7 @@ class IngestionService {
 
         return [
             'batch_id'     => $batchId,
+            'patient_id'   => $patientId,
             'sample_count' => count($samples),
             'rate_hz'      => $batchDoc['sample_rate_hz']
         ];

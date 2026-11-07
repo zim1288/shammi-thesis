@@ -22,24 +22,22 @@
 
 // ============================================================================
 // 1. NETWORK & CLOUD BACKEND CONFIGURATION
+// Loads private credentials from gitignored config.h (or fallback config.h.example)
 // ============================================================================
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-
-// Target Cloud Endpoint (Render Production or Local Development)
-const char* SERVER_URL_VITALS = "https://shammi-thesis.onrender.com/api/v1/readings";
-const char* SERVER_URL_ECG    = "https://shammi-thesis.onrender.com/api/v1/ecg";
-
-// For local network testing (uncomment below if testing on PC with XAMPP/PHP CLI):
-// const char* SERVER_URL_VITALS = "http://192.168.1.100:8000/api/v1/readings";
-// const char* SERVER_URL_ECG    = "http://192.168.1.100:8000/api/v1/ecg";
-
-// Secret Ingestion Bearer Token
-const char* API_BEARER_TOKEN = "esp32_research_secret_token_2026";
-
-// Device & Patient Mapping (Must match active patient on Doctor Portal)
-const char* DEVICE_UID = "ESP32-NODE-01";
-const char* PATIENT_ID = "PT-8802"; // Robert Vance (Bed 04 / Room 402)
+#if __has_include("config.h")
+#include "config.h"
+#elif __has_include("config.h.example")
+#include "config.h.example"
+#warning "Using config.h.example. Please create config.h with your private credentials!"
+#else
+#define WIFI_SSID         "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD     "YOUR_WIFI_PASSWORD"
+#define SERVER_URL_VITALS "https://shammi-thesis.onrender.com/api/v1/readings"
+#define SERVER_URL_ECG    "https://shammi-thesis.onrender.com/api/v1/ecg"
+#define API_BEARER_TOKEN  "YOUR_API_INGEST_KEY_HERE"
+#define DEVICE_UID        "ESP32-NODE-01"
+#define PATIENT_ID        "PT-8802"
+#endif
 
 // ============================================================================
 // 2. HARDWARE PIN DEFINITIONS
