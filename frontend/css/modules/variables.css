@@ -1,0 +1,79 @@
+/* ==========================================================================
+   MODULE: Global Variables, Typography & Base Layout
+   Theme: High-Tech Clinical Telemetry Console (Dark Phosphor Glassmorphism)
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap");
+@import url("https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css");
+
+:root {
+  --bg-color: #060913;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0d1527 0%, #060913 80%);
+  --surface-card: rgba(15, 23, 42, 0.75);
+  --surface-card-hover: rgba(22, 33, 58, 0.85);
+  --surface-inner: rgba(5, 10, 20, 0.8);
+  --surface-tile: #0a0f1d;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(255, 255, 255, 0.16);
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  /* Clinical Biosignal Accents */
+  --color-ecg: #10b981;        /* Phosphor green */
+  --color-ecg-glow: rgba(16, 185, 129, 0.35);
+  --color-ppg: #06b6d4;        /* Cyan */
+  --color-ppg-glow: rgba(6, 182, 212, 0.35);
+  --color-spo2: #38bdf8;       /* Sky blue */
+  --color-spo2-glow: rgba(56, 189, 248, 0.35);
+  --color-temp: #f59e0b;       /* Amber */
+  --color-temp-glow: rgba(245, 158, 11, 0.35);
+  --color-bp: #818cf8;         /* Indigo soft */
+  --color-bp-glow: rgba(129, 140, 248, 0.35);
+
+  --color-alert-crit: #ef4444; /* Red */
+  --color-alert-warn: #f59e0b; /* Yellow */
+  --radius-card: 18px;
+  --radius-tile: 14px;
+  --radius-btn: 10px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  padding: 24px 20px 40px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Subtle background noise texture */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Layout Container */
+.app-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}

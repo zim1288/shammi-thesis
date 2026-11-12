@@ -60,6 +60,15 @@ The system is designed to facilitate safe, post-acute remote patient observation
 ### Key Technical Highlights
 * **Authentication-First Workflow:** Unauthenticated visitors are automatically routed to the Login/Registration portal. All clinical views are protected by both server-side redirects and client-side session guards.
 * **Dual Heart Rate Separation:** Displays independent readings for **ECG Heart Rate (AD8232 Lead-II bio-amplifier)** and **MAX30102 Optical Pulse Rate (PPG)** to prevent clinical sensor ambiguity.
+* **Dynamic IoT Device Liveness (Online/Offline Status):**
+  * Real-time 45-second heartbeat freshness window evaluated against hardware ingestion timestamps.
+  * Live visual feedback in the Patient Directory: **Pulsing Green Dot & `ONLINE` Badge** when actively streaming; **Solid Red Dot & `OFFLINE` Badge** when disconnected or beyond heartbeat threshold.
+* **Patient Deletion & Hardware Unpairing:**
+  * One-click patient discharge with dedicated modal confirmation and CSRF security check.
+  * Automatically unbinds and frees the assigned ESP32 node back to the available hardware pool and decrements decongested bed metrics.
+* **Secure Clinician Credential Setup & Phishing Resistance:**
+  * Password reset and initial credential creation operate on a dedicated clinical screen (`set_credentials.html`).
+  * Utilizes secure browser `sessionStorage` instead of sensitive URL query parameters (`?email=...&token=...`), eliminating heuristic Safe Browsing false positives on public cloud hostnames.
 * **OTP Verification Vault & Security Lifecycle:**
   * **30-Minute Expiration Window:** OTP passcodes strictly expire after 30 minutes.
   * **2-Minute (120s) Resend Cooldown:** Rate-limiting blocks rapid resend spam on both frontend and backend (HTTP 429).
@@ -67,6 +76,7 @@ The system is designed to facilitate safe, post-acute remote patient observation
   * **Immediate Superseding:** Requesting a new code automatically invalidates previous codes.
   * **Zero Passcode Leakage:** Passcodes are never exposed on screen or in HTML markup.
   * **Client-Side RFC Validation:** Incomplete emails (e.g. `user@gmail` missing `.com`) are caught before any network calls.
+* **Modular Front-End Architecture:** Monolithic CSS and JS files refactored into focused, single-responsibility modules (`< 300` lines each) for maintainability and clean separation of concerns.
 * **Patient Onboarding & IoT Hardware Pairing:** Attending physicians can easily admit/discharge recovering patients and pair wearable ESP32 telemetry hardware with custom clinical alarm baselines.
 * **60 FPS Oscilloscope Sweep:** Hardware-accelerated HTML5 Canvas with continuous sweep line, blanking needle, and lead-off flatlining.
 * **Dual-Mode Telemetry Stream:** Real-time MQTT over WebSocket (`wss://`) with automatic 2.5-second REST polling fallback.
@@ -106,17 +116,34 @@ shammi thesis/
 │   ├── index.html                    # Dedicated Live Telemetry HUD & Oscilloscope
 │   ├── otp.html                      # 4-Digit OTP Passcode verification vault
 │   ├── patients.html                 # Central Doctor Dashboard & Patient Directory
+│   ├── set_credentials.html          # Registration-styled credential setup & password reset
+│   │
 │   ├── assets/                       # Custom styles & controller scripts for Auth & OTP
-│   │   ├── css/                      # Dedicated auth.css & otp.css
-│   │   └── js/                       # Dedicated auth.js & otp.js
-│   ├── css/                          # Core HUD stylesheet (styles.css)
+│   │   ├── css/                      # Master auth.css & otp.css
+│   │   │   └── modules/              # Modular Auth Subsystems (< 300 lines each)
+│   │   │       ├── auth_base.css     # Dark ambient canvas, backdrop light, reset & layout
+│   │   │       ├── auth_forms.css    # Sliding dual panels, clinical inputs & toggle buttons
+│   │   │       ├── password_meter.css # 5-criterion live strength meter & animated bar
+│   │   │       └── otp_modal.css     # OTP digit vault, spinning orbit ring & celebratory confetti
+│   │   └── js/                       # Dedicated auth.js, otp.js, & set_credentials.js
+│   │
+│   ├── css/                          # Core HUD stylesheet (styles.css entry point)
+│   │   └── modules/                  # Modular Application Subsystems
+│   │       ├── variables.css         # Clinical color palette, typography & glassmorphism
+│   │       ├── header.css            # Top command bar, breadcrumbs, doctor badge & nav
+│   │       ├── telemetry.css         # Live 5-grid vitals, canvas scope HUD & alarm strips
+│   │       └── dashboard.css         # Patient cards, table layout, modals & online/offline dots
+│   │
 │   └── js/                           # Modular Frontend Controllers
+│       ├── modules/                  # Domain-Specific UI & Service Modules
+│       │   ├── patient_api.js        # API service (roster fetch, patient create & delete)
+│       │   └── patient_ui.js         # Card & table row rendering with liveness indicators
 │       ├── auth_guard.js             # Client-side session gatekeeper & badge manager
 │       ├── config.js                 # Frontend API endpoints & MQTT WebSocket settings
 │       ├── dashboard.js              # Live telemetry coordinator & oscilloscope controller
 │       ├── ecg_canvas.js             # High-performance 60fps HTML5 Canvas ECG renderer
 │       ├── manual_bp_modal.js        # Decoupled Manual BP dialog & CSRF submission
-│       └── patients.js               # Patient directory, filtering, & device intake form
+│       └── patients.js               # Clean controller orchestrator for patient management
 │
 ├── backend/                          # Dedicated Backend Architecture (APIs, OOP Services & Data)
 │   ├── api/                          # Thin REST Controllers (JSON API)
@@ -125,7 +152,7 @@ shammi thesis/
 │   │   ├── blood_pressure/           # Segregated manual clinical observations
 │   │   ├── devices/                  # ESP32 hardware status & LWT heartbeat
 │   │   ├── ingest/                   # Hardware ingestion endpoints (Bearer token protected)
-│   │   ├── patients/                 # Discharge onboarding & hardware pairing
+│   │   ├── patients/                 # Discharge onboarding, hardware pairing, & deletion (delete.php)
 │   │   └── vitals/                   # Dashboard telemetry aggregation & research CSV export
 │   │
 │   ├── config/                       # Central Configuration
@@ -191,6 +218,16 @@ To admit a patient for remote post-acute care and pair an ESP32 wearable node:
    Configure custom Min/Max Heart Rate (BPM) and Minimum SpO₂ (%) thresholds tailored to the patient's clinical baseline.
 6. **Save & Monitor:**  
    Click **`Provision Device & Save Patient`**. The system registers the patient in the database, associates the node, and offers one-click navigation to their Dedicated Live Telemetry HUD.
+
+### 4.1 Patient Discharge & Node Unpairing Workflow
+When a patient completes remote monitoring or is discharged:
+1. Locate the patient in either the Card Grid or Table View on `frontend/patients.html`.
+2. Click the red **Trash Can icon (`<i class="ri-delete-bin-line"></i>`)** in the upper-right corner of their patient card or table row.
+3. A confirmation modal appears, summarizing the patient's ID, name, and paired IoT Device UID.
+4. Click **`Confirm Discharge & Delete`**. The system securely dispatches a CSRF-protected request to `POST /api/patients/delete.php`:
+   * Deletes the patient profile from MongoDB Atlas / JSON store.
+   * Automatically unassigns the ESP32 node and returns its status to `unassigned`, freeing it for future patient intake.
+   * Decrements active patient counts and dynamically updates decongested bed metrics across the portal.
 
 ---
 

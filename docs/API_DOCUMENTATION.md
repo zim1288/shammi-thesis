@@ -298,6 +298,73 @@ Provides hardware health query and keepalive heartbeats.
       "device_uid": "ESP32-NODE-01",
       "device_name": "Wearable Node (ESP32-NODE-01)",
       "assigned_patient_id": "PT-8802",
+      "mac_address": "24:6F:28:B4:72:01",
+      "status": "online",
+      "battery_level": 95,
+      "wifi_rssi": -62,
+      "firmware_version": "1.2.0",
+      "last_heartbeat": "2026-11-06T15:35:30+06:00"
+    }
+  }
+  ```
+
+---
+
+### 8. POST /api/patients/delete.php
+Discharges/deletes a patient record, automatically unpairs their associated wearable IoT hardware node, and updates hospital bed decongestion statistics.
+
+* **Authentication:** Requires active clinician session (`$_SESSION['user_id']`).
+* **Headers:**
+  * `Content-Type: application/json`
+  * `X-CSRF-Token: <CSRF_TOKEN>`
+* **Request Body:**
+  ```json
+  {
+    "patient_id": "PT-8802"
+  }
+  ```
+* **Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "ok": true,
+    "message": "Patient Robert Vance (#PT-8802) has been successfully discharged and removed.",
+    "timestamp": "2026-11-12T21:26:00+06:00",
+    "data": {
+      "deleted_patient_id": "PT-8802",
+      "freed_device_uid": "ESP32-NODE-01"
+    }
+  }
+  ```
+
+---
+
+### 9. POST /api/auth/session.php (Action: reset_password)
+Sets new clinical access credentials following 2FA OTP verification without exposing sensitive parameters in URL query strings.
+
+* **Headers:** `Content-Type: application/json`
+* **Request Body:**
+  ```json
+  {
+    "action": "reset_password",
+    "email": "doctor@hospital.org",
+    "reset_token": "24c08d851959b369e33d...",
+    "password": "NewSecurePassword2026!"
+  }
+  ```
+* **Response (`200 OK`):**
+  ```json
+  {
+    "success": true,
+    "ok": true,
+    "message": "Password has been reset successfully. Please login with your new credentials.",
+    "timestamp": "2026-11-12T20:00:00+06:00",
+    "data": {
+      "email": "doctor@hospital.org",
+      "updated": true
+    }
+  }
+  ```
       "status": "online",
       "battery_level": 95,
       "wifi_rssi": -62,
