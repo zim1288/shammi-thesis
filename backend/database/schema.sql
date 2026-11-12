@@ -190,18 +190,4 @@ INSERT INTO `user_accounts` (`id`, `username`, `email`, `password_hash`, `full_n
 (1, 'admin', 'admin@monitoring.local', '$2y$10$w8571jT5K4f5Z.5Qn0Gg8.Xg3hL2NqD5h2Z4bZ0G1wZgG6b8Y8a0K', 'Lead Researcher', 'admin'),
 (2, 'nurse01', 'nurse01@monitoring.local', '$2y$10$w8571jT5K4f5Z.5Qn0Gg8.Xg3hL2NqD5h2Z4bZ0G1wZgG6b8Y8a0K', 'Staff Nurse Jane', 'doctor');
 
--- Default Subject/Patient
-INSERT INTO `patients` (`id`, `patient_code`, `full_name`, `age`, `gender`, `room_bed`, `medical_notes`) VALUES
-(1, 'PT-8802', 'Mohammad Harun', 58, 'Male', 'Bed 04 / Room 402', 'Baseline sinus rhythm monitoring under research protocol #ESP-2026.');
-
--- Default ESP32 Device
-INSERT INTO `devices` (`id`, `device_uid`, `device_name`, `assigned_patient_id`, `status`, `battery_level`, `wifi_rssi`, `ip_address`, `firmware_version`, `last_heartbeat`) VALUES
-(1, 'ESP32-NODE-01', 'Clinical Bedside Node 01', 1, 'online', 92, -64, '192.168.1.145', '1.2.0', NOW());
-
--- Initial Manual Blood Pressure Baseline
-INSERT INTO `manual_blood_pressure` (`patient_id`, `systolic_bp`, `diastolic_bp`, `pulse_rate`, `measurement_timestamp`, `notes`, `recorded_by_user_id`) VALUES
-(1, 120, 80, 72, NOW(), 'Baseline seated brachial artery cuff measurement.', 1);
-
--- Initial Baseline Vitals
-INSERT INTO `sensor_readings` (`device_id`, `patient_id`, `ecg_heart_rate`, `max30102_pulse_rate`, `spo2`, `ir_temperature`, `ecg_lead_status`, `ppg_finger_detected`, `signal_validity`, `reading_timestamp`) VALUES
-(1, 1, 74, 72, 98.0, 36.65, 'normal', 1, 'valid', NOW());
+-- (Initial demo seed data removed for production & live device testing)

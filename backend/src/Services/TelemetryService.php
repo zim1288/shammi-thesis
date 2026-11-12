@@ -60,10 +60,10 @@ class TelemetryService {
         $assignedDeviceUid = $patient['assigned_device_uid'] ?? 'ESP32-NODE-01';
         $device = $this->deviceRepo->findByUid($assignedDeviceUid) ?: [
             'device_uid'     => $assignedDeviceUid,
-            'status'         => 'online',
-            'battery_level'  => 92,
-            'wifi_rssi'      => -64,
-            'last_heartbeat' => date('c')
+            'status'         => 'offline',
+            'battery_level'  => null,
+            'wifi_rssi'      => null,
+            'last_heartbeat' => null
         ];
 
         // Heartbeat timeout check (offline if no message in last 35 seconds)

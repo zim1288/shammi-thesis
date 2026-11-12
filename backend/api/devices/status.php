@@ -68,7 +68,7 @@ if ($method === 'POST') {
     if ($status === 'offline') {
         $alertRepo = new AlertRepository();
         $alertRepo->insertAlert([
-            'patient_id' => $request->get('patient_id', 'PT-8802'),
+            'patient_id' => $request->get('patient_id', 'UNASSIGNED'),
             'device_uid' => $deviceUid,
             'alert_type' => 'device_offline',
             'severity'   => 'warning',
