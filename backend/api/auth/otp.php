@@ -78,7 +78,7 @@ if ($action === 'request' || $action === 'resend') {
 
     if ($isForgotPassword) {
         // For password reset, do NOT authenticate clinician session prematurely.
-        // Clinician must first set their new password on reset_password.html and then login.
+        // Clinician must first set their new password on set_credentials.html and then login.
         Response::success([
             'verified'    => true,
             'flow'        => 'forgot_password',

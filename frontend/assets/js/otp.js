@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1500));
   }
 
-  // Forgot Password Verification Success -> Redirect to reset_password.html
+  // Forgot Password Verification Success -> Redirect to set_credentials.html
   function handleForgotPasswordRedirect(resetToken) {
     state = 'success';
     loadingWrap.classList.remove('active');
@@ -368,9 +368,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear cooldown state
     sessionStorage.removeItem(COOLDOWN_KEY);
 
-    // Redirect to dedicated reset_password.html page after celebration
+    // Securely pass email and reset_token in sessionStorage (avoids phishing/heuristic flags on query params)
+    sessionStorage.setItem('reset_email', userEmail);
+    if (resetToken) {
+      sessionStorage.setItem('reset_token', resetToken);
+    }
+
+    // Redirect to clean dedicated set_credentials.html page after celebration
     timers.push(setTimeout(() => {
-      window.location.href = `reset_password.html?email=${encodeURIComponent(userEmail)}&token=${encodeURIComponent(resetToken)}`;
+      window.location.href = 'set_credentials.html';
     }, 1500));
   }
 
