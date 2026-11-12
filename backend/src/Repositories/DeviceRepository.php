@@ -54,6 +54,22 @@ class DeviceRepository {
         );
     }
 
+    public function unassignPatient(string $deviceUid): int {
+        return $this->db->update(
+            $this->collection,
+            ['device_uid' => $deviceUid],
+            ['assigned_patient_id' => null, 'status' => 'offline']
+        );
+    }
+
+    public function unassignByPatientId(string $patientId): int {
+        return $this->db->update(
+            $this->collection,
+            ['assigned_patient_id' => $patientId],
+            ['assigned_patient_id' => null, 'status' => 'offline']
+        );
+    }
+
     public function create(array $deviceData): string {
         return $this->db->insert($this->collection, $deviceData);
     }

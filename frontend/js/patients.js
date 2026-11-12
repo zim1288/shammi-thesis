@@ -24,13 +24,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnViewCards      = document.getElementById('btnViewCards');
   const btnViewTable      = document.getElementById('btnViewTable');
 
-  // Modal References
+  // Modal References: Add Patient
   const modalAddPatient   = document.getElementById('modalAddPatient');
   const btnOpenAddModal   = document.getElementById('btnOpenAddModal');
   const btnNavOpenAddModal= document.getElementById('btnNavOpenAddModal');
   const btnCloseAddModal  = document.getElementById('btnCloseAddModal');
   const btnCancelAddModal = document.getElementById('btnCancelAddModal');
   const formAddPatient    = document.getElementById('formAddPatient');
+
+  // Modal References: Delete Patient
+  const modalDeletePatient   = document.getElementById('modalDeletePatient');
+  const btnCloseDeleteModal  = document.getElementById('btnCloseDeleteModal');
+  const btnCancelDeleteModal = document.getElementById('btnCancelDeleteModal');
+  const btnConfirmDelete     = document.getElementById('btnConfirmDelete');
+  const deletePatientName    = document.getElementById('deletePatientName');
+  const deletePatientCode    = document.getElementById('deletePatientCode');
+  const deleteDeviceUid      = document.getElementById('deleteDeviceUid');
 
   // State
   let allPatients = [];
@@ -39,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSearchQuery = '';
   let currentViewMode = 'cards'; // 'cards' | 'table'
   let currentCsrfToken = '';
+  let patientToDelete = null;
 
   // =========================================================================
   // 1. FETCH ACTIVE ROSTER FROM API
@@ -55,21 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRoster();
       }
     } catch (err) {
-      console.error('Failed to load roster:', err);
-      patientCardsGrid.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #f87171;">
-          <i class="ri-error-warning-line" style="font-size: 32px;"></i>
-          <p style="margin-top: 10px;">Failed to connect to patient directory. Please check server.</p>
-        </div>
-      `;
+      console.warn('Failed to refresh roster:', err);
+      if (!allPatients || allPatients.length === 0) {
+        patientCardsGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #f87171;">
+            <i class="ri-error-warning-line" style="font-size: 32px;"></i>
+            <p style="margin-top: 10px;">Failed to connect to patient directory. Please check server.</p>
+          </div>
+        `;
+      }
     }
   }
 
   // Update Executive KPIs
   function updateKpiStats(stats) {
-    if (statTotalMonitored) statTotalMonitored.innerText = stats.total_monitored ?? allPatients.length;
-    if (statBedsFreed) statBedsFreed.innerText = `${stats.beds_decongested ?? allPatients.length} Beds`;
-    if (kpiTopDecongested) kpiTopDecongested.innerText = `${stats.beds_decongested ?? allPatients.length} Freed`;
+    const total = stats.total_monitored ?? allPatients.length;
+    if (statTotalMonitored) statTotalMonitored.innerText = total;
+    if (statBedsFreed) statBedsFreed.innerText = `${stats.beds_decongested ?? total} Beds`;
+    if (kpiTopDecongested) kpiTopDecongested.innerText = `${stats.beds_decongested ?? total} Freed`;
     
     const crit = stats.critical_count ?? 0;
     const warn = stats.caution_count ?? 0;
@@ -77,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeActiveAlerts) badgeActiveAlerts.innerText = crit + warn;
     
     const online = stats.devices_online ?? 0;
-    const total = stats.total_monitored ?? allPatients.length;
     if (statActiveNodes) statActiveNodes.innerText = `${online} / ${total}`;
     if (kpiTopNodes) kpiTopNodes.innerText = `${online} Online`;
   }
@@ -97,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       // Search query
       if (currentSearchQuery) {
-        const str = `${p.full_name} ${p.patient_code} ${p.assigned_device.device_uid} ${p.ward_origin}`.toLowerCase();
+        const devUid = p.assigned_device?.device_uid || '';
+        const str = `${p.full_name} ${p.patient_code} ${devUid} ${p.ward_origin}`.toLowerCase();
         if (!str.includes(currentSearchQuery)) return false;
       }
       return true;
@@ -128,8 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
     patientCardsGrid.innerHTML = patients.map(p => {
       const riskClass = p.risk_status === 'Critical' ? 'tier-critical' : (p.risk_status === 'Caution' ? 'tier-caution' : 'tier-normal');
       const tagClass = p.risk_status === 'Critical' ? 'critical' : (p.risk_status === 'Caution' ? 'caution' : 'normal');
-      const isOnline = (p.assigned_device.status === 'online');
-      const dotColor = isOnline ? '#10b981' : '#f87171';
+      
+      const isOnline = (p.assigned_device?.status === 'online' || p.assigned_device?.is_online === true);
+      const dotStateClass = isOnline ? 'online' : 'offline';
+      const pillLabel = isOnline ? 'ONLINE' : 'OFFLINE';
 
       const initials = p.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
       const vitals = p.latest_vitals || {};
@@ -137,10 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const spo2 = vitals.spo2 ? parseFloat(vitals.spo2).toFixed(0) : '--';
       const temp = vitals.ir_temperature ? parseFloat(vitals.ir_temperature).toFixed(1) : '--';
 
+      const deviceUid = p.assigned_device?.device_uid || 'ESP32-NODE';
+      const deviceRssi = p.assigned_device?.wifi_rssi;
+      const deviceBatt = p.assigned_device?.battery_level;
+
       return `
-        <div class="patient-roster-card ${riskClass}">
+        <div class="patient-roster-card ${riskClass}" id="patient-card-${encodeURIComponent(p.id)}">
           <div>
-            <!-- Top Row -->
+            <!-- Top Row: Patient Info + Risk Tag + Delete Action -->
             <div class="roster-card-header">
               <div class="patient-title-group">
                 <div class="avatar-badge">${initials}</div>
@@ -149,10 +168,20 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="patient-sub-meta">${p.age} Yrs • ${p.gender} • #${p.patient_code}</div>
                 </div>
               </div>
-              <span class="risk-tag ${tagClass}">
-                <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>
-                ${p.risk_status}
-              </span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="risk-tag ${tagClass}">
+                  <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>
+                  ${p.risk_status}
+                </span>
+                <button type="button" class="btn-delete-patient" 
+                  data-id="${encodeURIComponent(p.id)}" 
+                  data-name="${escapeHtml(p.full_name)}" 
+                  data-code="${escapeHtml(p.patient_code)}" 
+                  data-device="${escapeHtml(deviceUid)}" 
+                  title="Discharge & Delete Patient">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
             </div>
 
             <!-- Originating Ward & Decongested Bed -->
@@ -160,15 +189,18 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="ri-hotel-bed-line"></i> Origin: <strong>${escapeHtml(p.ward_origin)}</strong>
             </div>
 
-            <!-- Hardware Node Association Strip -->
+            <!-- Dynamic Hardware Node Association Strip (Green = Online, Red = Offline) -->
             <div class="device-pairing-strip">
-              <span style="display:flex; align-items:center; gap:6px;">
-                <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};box-shadow:0 0 6px ${dotColor};display:inline-block"></span>
-                <strong>${escapeHtml(p.assigned_device.device_uid)}</strong>
+              <span style="display:flex; align-items:center; gap:8px;">
+                <span class="device-status-dot ${dotStateClass}"></span>
+                <strong>${escapeHtml(deviceUid)}</strong>
+                <span class="device-status-pill ${dotStateClass}">${pillLabel}</span>
               </span>
               <span style="color:var(--text-muted); font-size:11px;">
-                <i class="ri-wifi-line"></i> ${p.assigned_device.wifi_rssi} dBm &nbsp;|&nbsp; 
-                <i class="ri-battery-charge-line"></i> ${p.assigned_device.battery_level}%
+                ${isOnline && deviceRssi !== null
+                  ? `<i class="ri-wifi-line" style="color:#10b981;"></i> ${deviceRssi} dBm &nbsp;|&nbsp; <i class="ri-battery-charge-line" style="color:#38bdf8;"></i> ${deviceBatt}%`
+                  : `<span style="color:#94a3b8;"><i class="ri-wifi-off-line" style="color:#f87171; margin-right:2px;"></i> Disconnected</span>`
+                }
               </span>
             </div>
 
@@ -202,6 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }).join('');
+
+    bindDeleteButtons();
   }
 
   // Render Data Table
@@ -222,14 +256,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     patientTableBody.innerHTML = patients.map(p => {
       const tagClass = p.risk_status === 'Critical' ? 'critical' : (p.risk_status === 'Caution' ? 'caution' : 'normal');
-      const isOnline = (p.assigned_device.status === 'online');
-      const dotColor = isOnline ? '#10b981' : '#f87171';
+      const isOnline = (p.assigned_device?.status === 'online' || p.assigned_device?.is_online === true);
+      const dotStateClass = isOnline ? 'online' : 'offline';
+      const pillLabel = isOnline ? 'ONLINE' : 'OFFLINE';
+
       const vitals = p.latest_vitals || {};
       const hr = vitals.ecg_heart_rate ?? '--';
       const spo2 = vitals.spo2 ? parseFloat(vitals.spo2).toFixed(0) + '%' : '--';
+      const deviceUid = p.assigned_device?.device_uid || 'ESP32-NODE';
 
       return `
-        <tr>
+        <tr id="patient-row-${encodeURIComponent(p.id)}">
           <td>
             <span class="risk-tag ${tagClass}">
               <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>
@@ -249,11 +286,15 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td>
             <div style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:12px;">
-              <span style="width:7px;height:7px;border-radius:50%;background:${dotColor};box-shadow:0 0 6px ${dotColor};display:inline-block"></span>
-              <strong>${escapeHtml(p.assigned_device.device_uid)}</strong>
+              <span class="device-status-dot ${dotStateClass}"></span>
+              <strong>${escapeHtml(deviceUid)}</strong>
+              <span class="device-status-pill ${dotStateClass}">${pillLabel}</span>
             </div>
-            <div style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace;">
-              MAC: ${escapeHtml(p.assigned_device.device_mac || 'N/A')}
+            <div style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-top:3px;">
+              ${isOnline && p.assigned_device?.wifi_rssi !== null
+                ? `WiFi: ${p.assigned_device.wifi_rssi} dBm | Batt: ${p.assigned_device.battery_level}%`
+                : 'MAC: ' + escapeHtml(p.assigned_device?.device_mac || 'N/A')
+              }
             </div>
           </td>
           <td>
@@ -262,18 +303,112 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="color:#38bdf8; font-weight:700; font-family:'JetBrains Mono',monospace;">${spo2}</span>
           </td>
           <td>
-            <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="nav-btn primary" style="padding:6px 12px; font-size:12px;">
-              <i class="ri-pulse-line"></i>
-              <span>Monitor</span>
-            </a>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="nav-btn primary" style="padding:6px 12px; font-size:12px;">
+                <i class="ri-pulse-line"></i>
+                <span>Monitor</span>
+              </a>
+              <button type="button" class="btn-delete-patient" 
+                data-id="${encodeURIComponent(p.id)}" 
+                data-name="${escapeHtml(p.full_name)}" 
+                data-code="${escapeHtml(p.patient_code)}" 
+                data-device="${escapeHtml(deviceUid)}" 
+                title="Discharge & Delete Patient">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
           </td>
         </tr>
       `;
     }).join('');
+
+    bindDeleteButtons();
   }
 
   // =========================================================================
-  // 3. SEARCH & FILTER EVENT HANDLERS
+  // 3. DELETE PATIENT CONFIRMATION & EXECUTION
+  // =========================================================================
+  function bindDeleteButtons() {
+    document.querySelectorAll('.btn-delete-patient').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const id = decodeURIComponent(btn.getAttribute('data-id'));
+        const name = btn.getAttribute('data-name');
+        const code = btn.getAttribute('data-code');
+        const device = btn.getAttribute('data-device');
+
+        openDeleteModal({ id, name, code, device });
+      });
+    });
+  }
+
+  function openDeleteModal(patient) {
+    patientToDelete = patient;
+    if (deletePatientName) deletePatientName.textContent = patient.name;
+    if (deletePatientCode) deletePatientCode.textContent = '#' + patient.code;
+    if (deleteDeviceUid) deleteDeviceUid.textContent = patient.device;
+    if (modalDeletePatient) modalDeletePatient.classList.add('active');
+  }
+
+  function closeDeleteModal() {
+    patientToDelete = null;
+    if (modalDeletePatient) modalDeletePatient.classList.remove('active');
+  }
+
+  if (btnCloseDeleteModal)  btnCloseDeleteModal.addEventListener('click', closeDeleteModal);
+  if (btnCancelDeleteModal) btnCancelDeleteModal.addEventListener('click', closeDeleteModal);
+
+  if (modalDeletePatient) {
+    modalDeletePatient.addEventListener('click', (e) => {
+      if (e.target === modalDeletePatient) closeDeleteModal();
+    });
+  }
+
+  if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener('click', async () => {
+      if (!patientToDelete) return;
+
+      const pId = patientToDelete.id;
+      const pName = patientToDelete.name;
+
+      btnConfirmDelete.disabled = true;
+      btnConfirmDelete.innerHTML = '<i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i> Removing...';
+
+      try {
+        const res = await fetch('../api/patients/delete.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': currentCsrfToken
+          },
+          body: JSON.stringify({ patient_id: pId })
+        });
+
+        const json = await res.json();
+
+        if (res.ok && json.success) {
+          closeDeleteModal();
+          // Remove patient from local array immediately
+          allPatients = allPatients.filter(p => p.id !== pId && p.patient_code !== pId);
+          renderRoster();
+          // Refresh full roster & stats from backend
+          await loadPatientRoster();
+        } else {
+          alert('Failed to remove patient: ' + (json.message || 'Server error'));
+        }
+      } catch (err) {
+        alert('Network communication error while removing patient.');
+      } finally {
+        btnConfirmDelete.disabled = false;
+        btnConfirmDelete.innerHTML = '<i class="ri-delete-bin-7-line"></i> <span>Confirm Delete</span>';
+      }
+    });
+  }
+
+  // =========================================================================
+  // 4. SEARCH & FILTER EVENT HANDLERS
   // =========================================================================
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -284,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (wardFilter) {
     wardFilter.addEventListener('change', (e) => {
-      currentWardFilter = e.target.value;
+      currentWardFilter = e.target.value.trim();
       renderRoster();
     });
   }
@@ -298,7 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // View Switcher Handlers
   if (btnViewCards && btnViewTable) {
     btnViewCards.addEventListener('click', () => {
       currentViewMode = 'cards';
@@ -316,9 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 4. DEVICE ASSOCIATION MODAL (Discharge Intake Form)
+  // 5. ADD PATIENT MODAL HANDLERS
   // =========================================================================
-  function openModal() {
+  function openAddModal() {
     if (modalAddPatient) {
       modalAddPatient.classList.add('active');
       // Fetch fresh CSRF token
@@ -339,27 +473,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function closeModal() {
+  function closeAddModal() {
     if (modalAddPatient) {
       modalAddPatient.classList.remove('active');
       if (formAddPatient) formAddPatient.reset();
     }
   }
 
-  if (btnOpenAddModal)    btnOpenAddModal.addEventListener('click', openModal);
-  if (btnNavOpenAddModal) btnNavOpenAddModal.addEventListener('click', openModal);
-  if (btnCloseAddModal)   btnCloseAddModal.addEventListener('click', closeModal);
-  if (btnCancelAddModal)  btnCancelAddModal.addEventListener('click', closeModal);
+  if (btnOpenAddModal)    btnOpenAddModal.addEventListener('click', openAddModal);
+  if (btnNavOpenAddModal) btnNavOpenAddModal.addEventListener('click', openAddModal);
+  if (btnCloseAddModal)   btnCloseAddModal.addEventListener('click', closeAddModal);
+  if (btnCancelAddModal)  btnCancelAddModal.addEventListener('click', closeAddModal);
 
   // Auto open modal if navigated with ?open_add=1
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('open_add') === '1' || urlParams.get('add') === 'true') {
-    setTimeout(openModal, 250);
+    setTimeout(openAddModal, 250);
   }
 
   if (modalAddPatient) {
     modalAddPatient.addEventListener('click', (e) => {
-      if (e.target === modalAddPatient) closeModal();
+      if (e.target === modalAddPatient) closeAddModal();
     });
   }
 
@@ -398,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
 
         if (data.success) {
-          closeModal();
+          closeAddModal();
           await loadPatientRoster();
           
           const newId = data.data?.patient?.id;
@@ -427,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  // Initial Load & Refresh Interval
+  // Initial Load & Real-Time Polling Interval (Every 5 seconds)
   loadPatientRoster();
   setInterval(loadPatientRoster, 5000);
 });

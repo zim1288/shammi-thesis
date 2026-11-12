@@ -197,6 +197,25 @@ class MongoConnection {
     }
 
     /**
+     * Delete Documents
+     */
+    public function delete(string $collection, array $filter, array $options = ['limit' => 1]): int {
+        if ($this->isConnected && $this->manager) {
+            try {
+                $mongoFilter = $this->prepareFilter($filter);
+                $bulk = new BulkWrite();
+                $bulk->delete($mongoFilter, $options);
+                $result = $this->manager->executeBulkWrite("{$this->dbName}.{$collection}", $bulk);
+                return $result->getDeletedCount();
+            } catch (MongoDriverException $e) {
+                error_log("MongoDB Delete Error: " . $e->getMessage());
+            }
+        }
+
+        return $this->deleteJsonFallback($collection, $filter, $options);
+    }
+
+    /**
      * JSON File Fallback Engine
      * Keeps application working seamlessly even if MongoDB Atlas credentials are not yet configured!
      */
@@ -292,5 +311,32 @@ class MongoConnection {
         }
         $this->writeJsonCollection($collection, $data);
         return $count;
+    }
+
+    private function deleteJsonFallback(string $collection, array $filter, array $options = []): int {
+        $data = $this->readJsonCollection($collection);
+        $limit = $options['limit'] ?? 0;
+        $deleted = 0;
+        $newData = [];
+
+        foreach ($data as $item) {
+            $match = true;
+            foreach ($filter as $k => $v) {
+                if (!isset($item[$k]) || $item[$k] != $v) {
+                    $match = false;
+                    break;
+                }
+            }
+            if ($match && ($limit === 0 || $deleted < $limit)) {
+                $deleted++;
+            } else {
+                $newData[] = $item;
+            }
+        }
+
+        if ($deleted > 0) {
+            $this->writeJsonCollection($collection, $newData);
+        }
+        return $deleted;
     }
 }

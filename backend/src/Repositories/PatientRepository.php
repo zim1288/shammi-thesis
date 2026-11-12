@@ -38,4 +38,12 @@ class PatientRepository {
         }
         return $this->db->insert($this->collection, $patientData);
     }
+
+    public function delete(string $id): bool {
+        $deleted = $this->db->delete($this->collection, ['id' => $id]);
+        if ($deleted === 0) {
+            $deleted = $this->db->delete($this->collection, ['patient_code' => $id]);
+        }
+        return $deleted > 0;
+    }
 }

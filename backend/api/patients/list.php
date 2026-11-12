@@ -51,10 +51,6 @@ foreach ($allPatients as $p) {
         'wifi_rssi'     => -99
     ];
 
-    if (($device['status'] ?? 'offline') === 'online') {
-        $stats['devices_online']++;
-    }
-
     // Latest vitals snapshot
     $latestVitals = $vitalsRepo->getLatestByPatient($patientId) ?: [
         'ecg_heart_rate'      => null,
@@ -63,6 +59,35 @@ foreach ($allPatients as $p) {
         'ir_temperature'      => null,
         'timestamp'           => null
     ];
+
+    // Dynamic Online / Offline Detection (Heartbeat or Vitals received within last 45 seconds)
+    $lastSignalTime = null;
+    if (!empty($device['last_heartbeat'])) {
+        $t = strtotime($device['last_heartbeat']);
+        if ($t) $lastSignalTime = $t;
+    }
+    if (!empty($latestVitals['timestamp'])) {
+        $t = strtotime($latestVitals['timestamp']);
+        if ($t && (!$lastSignalTime || $t > $lastSignalTime)) {
+            $lastSignalTime = $t;
+        }
+    }
+
+    $now = time();
+    $isOnline = false;
+    $secondsAgo = null;
+    if ($lastSignalTime) {
+        $secondsAgo = $now - $lastSignalTime;
+        // Mark device ONLINE if heartbeat/vitals received within last 45 seconds
+        if ($secondsAgo >= 0 && $secondsAgo <= 45) {
+            $isOnline = true;
+        }
+    }
+
+    $deviceStatus = $isOnline ? 'online' : 'offline';
+    if ($isOnline) {
+        $stats['devices_online']++;
+    }
 
     // Determine physiological risk tier
     $risk = $p['risk_status'] ?? 'Normal';
@@ -93,9 +118,11 @@ foreach ($allPatients as $p) {
         'assigned_device'     => [
             'device_uid'      => $deviceUid,
             'device_mac'      => $p['device_mac'] ?? ($device['mac_address'] ?? 'N/A'),
-            'status'          => $device['status'] ?? 'offline',
-            'battery_level'   => $device['battery_level'] ?? 0,
-            'wifi_rssi'       => $device['wifi_rssi'] ?? -99
+            'status'          => $deviceStatus,
+            'is_online'       => $isOnline,
+            'seconds_ago'     => $secondsAgo,
+            'battery_level'   => $isOnline ? ($device['battery_level'] ?? 0) : 0,
+            'wifi_rssi'       => $isOnline ? ($device['wifi_rssi'] ?? -99) : null
         ],
         'latest_vitals'       => $latestVitals,
         'risk_status'         => $risk,

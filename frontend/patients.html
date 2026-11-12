@@ -342,6 +342,44 @@
       </div>
     </div>
 
+    <!-- 6B. DELETE PATIENT CONFIRMATION MODAL -->
+    <div id="modalDeletePatient" class="modal-backdrop">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="brand-icon-box" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #f87171;">
+              <i class="ri-delete-bin-line"></i>
+            </div>
+            <div>
+              <h2 class="modal-title" style="color: #f87171;">Discharge & Remove Patient</h2>
+              <p class="modal-subtitle">Unpair IoT monitor and remove from active directory</p>
+            </div>
+          </div>
+          <button id="btnCloseDeleteModal" class="btn-close-modal" type="button">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+
+        <div style="padding: 18px 0; color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+          <p>Are you sure you want to permanently discharge and remove <strong id="deletePatientName" style="color:#fff;"></strong> (<span id="deletePatientCode" style="color:#818cf8; font-family:'JetBrains Mono',monospace;"></span>)?</p>
+          <div style="margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 10px; font-size: 12px; color: #fca5a5;">
+            <i class="ri-alert-line" style="margin-right: 4px;"></i>
+            This will immediately unpair hardware node <strong id="deleteDeviceUid" style="color:#fff;"></strong> and return it to the available pool.
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button type="button" id="btnCancelDeleteModal" class="nav-btn" style="padding: 9px 18px;">
+            Cancel
+          </button>
+          <button type="button" id="btnConfirmDelete" class="nav-btn" style="background: linear-gradient(135deg, #dc2626, #ef4444); border-color: rgba(239,68,68,0.5); color: #fff; padding: 9px 20px; font-weight: 600;">
+            <i class="ri-delete-bin-7-line"></i>
+            <span>Confirm Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 7. FOOTER DISCLAIMER -->
     <footer class="app-footer">
       <p style="font-weight: 700; color: #fbbf24; margin-bottom: 4px; font-size: 13px;">
@@ -357,7 +395,7 @@
 
   </div>
 
-  <!-- PATIENT DIRECTORY CONTROLLER SCRIPT -->
-  <script src="js/patients.js"></script>
+  <!-- PATIENT DIRECTORY CONTROLLER SCRIPT (Cache-busted) -->
+  <script src="js/patients.js?v=20261112_06"></script>
 </body>
 </html>
