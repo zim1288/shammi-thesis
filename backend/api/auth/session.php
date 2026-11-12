@@ -7,11 +7,13 @@ require_once __DIR__ . '/../../src/Core/Response.php';
 require_once __DIR__ . '/../../src/Core/Request.php';
 require_once __DIR__ . '/../../src/Core/Security.php';
 require_once __DIR__ . '/../../src/Repositories/UserRepository.php';
+require_once __DIR__ . '/../../src/Repositories/OtpRepository.php';
 
 use App\Core\Response;
 use App\Core\Request;
 use App\Core\Security;
 use App\Repositories\UserRepository;
+use App\Repositories\OtpRepository;
 
 $request  = new Request();
 $action   = strtolower(trim($request->get('action', 'check')));
@@ -102,6 +104,49 @@ if ($action === 'login') {
         ],
         'csrf_token' => Security::generateCsrfToken()
     ], 'Account registered successfully', 201);
+
+// -----------------------------------------------------------------------------
+// ACTION: RESET PASSWORD
+// -----------------------------------------------------------------------------
+} elseif ($action === 'reset_password') {
+    $email       = strtolower(trim($request->get('email', '')));
+    $newPassword = $request->getRaw('password', $request->getRaw('new_password', ''));
+    $resetToken  = trim($request->get('reset_token', ''));
+
+    if (empty($email) || empty($newPassword)) {
+        Response::error('Email and new password are required.', 422);
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        Response::error('Please provide a valid email address.', 422);
+    }
+
+    if (strlen($newPassword) < 6) {
+        Response::error('Password must be at least 6 characters long.', 422);
+    }
+
+    $otpRepo = new OtpRepository();
+    // Validate single-use reset token
+    if (empty($resetToken) || !$otpRepo->verifyResetToken($email, $resetToken)) {
+        Response::error('Invalid or expired password reset session. Please request a new verification code.', 403);
+    }
+
+    // Update password securely in UserRepository
+    $updated = $userRepo->updatePassword($email, $newPassword);
+    if (!$updated) {
+        Response::error('Unable to update password. Please try again.', 500);
+    }
+
+    // Invalidate reset token so it cannot be used again
+    $otpRepo->invalidateResetToken($email);
+
+    // Clear any active session to require fresh authentication with new credentials
+    $_SESSION = [];
+
+    Response::success([
+        'email'   => $email,
+        'updated' => true
+    ], 'Password has been reset successfully. Please login with your new credentials.');
 
 // -----------------------------------------------------------------------------
 // ACTION: LOGOUT

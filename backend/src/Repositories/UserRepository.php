@@ -110,4 +110,43 @@ class UserRepository {
 
         return $newUser;
     }
+
+    /**
+     * Update user password securely using bcrypt
+     */
+    public function updatePassword(string $email, string $newPassword): bool {
+        $cleanEmail = strtolower(trim($email));
+        $users = $this->getAll();
+        $found = false;
+
+        foreach ($users as &$user) {
+            if ((!empty($user['email']) && strcasecmp($user['email'], $cleanEmail) === 0) ||
+                (!empty($user['username']) && strcasecmp($user['username'], $cleanEmail) === 0)) {
+                $user['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
+                $user['updated_at'] = date('c');
+                $found = true;
+                break;
+            }
+        }
+        unset($user);
+
+        if ($found) {
+            return $this->saveAll($users);
+        }
+
+        // If user wasn't in users.json yet, create entry so they can authenticate
+        $newUser = [
+            'id'            => 'USR-' . strtoupper(substr(md5(uniqid()), 0, 6)),
+            'username'      => $cleanEmail,
+            'email'         => $cleanEmail,
+            'password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+            'full_name'     => 'Dr. ' . ucfirst(explode('@', $cleanEmail)[0]) . ', MD',
+            'role'          => 'attending_physician',
+            'ward'          => 'ICU Step-Down',
+            'created_at'    => date('c'),
+            'updated_at'    => date('c')
+        ];
+        $users[] = $newUser;
+        return $this->saveAll($users);
+    }
 }

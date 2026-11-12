@@ -96,6 +96,47 @@
     <!-- Error Prompt -->
     <div class="error-msg" id="errorMsg">Incorrect code. Please try again.</div>
 
+    <!-- New Password Reset Stage (Revealed after OTP verification for forgot_password) -->
+    <div class="reset-stage" id="resetStage" style="display:none;">
+      <form id="resetPasswordForm" autocomplete="off" novalidate>
+        <div class="reset-field">
+          <label for="newPassword" class="reset-label">New Password</label>
+          <div class="reset-input-wrapper">
+            <i class="ri-lock-2-line reset-icon-left"></i>
+            <input type="password" id="newPassword" class="reset-input" placeholder="Enter new password (min. 6 chars)" required>
+            <button type="button" class="reset-eye-btn" id="toggleEyeNew" aria-label="Toggle password visibility">
+              <i class="ri-eye-line"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Password Requirements Live Indicator -->
+        <div class="reset-requirements" id="resetRequirements">
+          <div class="req-item" id="reqChars"><i class="ri-circle-line"></i> <span>At least 6 characters</span></div>
+          <div class="req-item" id="reqNum"><i class="ri-circle-line"></i> <span>Contains a number (0-9)</span></div>
+          <div class="req-item" id="reqCase"><i class="ri-circle-line"></i> <span>Uppercase & lowercase letters</span></div>
+        </div>
+
+        <div class="reset-field">
+          <label for="confirmPassword" class="reset-label">Confirm New Password</label>
+          <div class="reset-input-wrapper">
+            <i class="ri-lock-password-line reset-icon-left"></i>
+            <input type="password" id="confirmPassword" class="reset-input" placeholder="Re-type new password" required>
+            <button type="button" class="reset-eye-btn" id="toggleEyeConfirm" aria-label="Toggle confirm password visibility">
+              <i class="ri-eye-line"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="reset-error-msg" id="resetErrorMsg"></div>
+
+        <button type="submit" class="reset-submit-btn" id="btnSubmitResetPassword">
+          <span>Update Password</span>
+          <i class="ri-arrow-right-line"></i>
+        </button>
+      </form>
+    </div>
+
     <!-- Resend Button -->
     <button class="resend-btn" id="resendBtn">Didn't receive it? <span>Resend</span></button>
   </main>

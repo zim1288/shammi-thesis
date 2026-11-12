@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // State
   let state = 'idle';
+  let currentResetToken = null;
   const timers = [];
   let cooldownInterval = null;
 
@@ -332,7 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         timers.push(setTimeout(() => {
           if (res.ok && json.success) {
-            handleSuccess(json.data?.user);
+            if (userAction === 'forgot_password') {
+              currentResetToken = json.data?.reset_token || null;
+              revealResetPasswordStage();
+            } else {
+              handleSuccess(json.data?.user);
+            }
           } else {
             handleError(json.message || 'Incorrect verification code. Please try again.');
           }
@@ -489,6 +495,181 @@ document.addEventListener('DOMContentLoaded', () => {
 
       await requestOtp(true);
       resetState(true);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7. NEW PASSWORD RESET STAGE CONTROLLER (For forgot_password workflow)
+  // ---------------------------------------------------------------------------
+  const resetStage = document.getElementById('resetStage');
+  const resetPasswordForm = document.getElementById('resetPasswordForm');
+  const newPassword = document.getElementById('newPassword');
+  const confirmPassword = document.getElementById('confirmPassword');
+  const toggleEyeNew = document.getElementById('toggleEyeNew');
+  const toggleEyeConfirm = document.getElementById('toggleEyeConfirm');
+  const resetErrorMsg = document.getElementById('resetErrorMsg');
+  const btnSubmitResetPassword = document.getElementById('btnSubmitResetPassword');
+  const reqChars = document.getElementById('reqChars');
+  const reqNum = document.getElementById('reqNum');
+  const reqCase = document.getElementById('reqCase');
+  const stage = document.getElementById('stage');
+
+  function revealResetPasswordStage() {
+    state = 'reset_stage';
+    loadingWrap.classList.remove('active');
+    clearAllTimers();
+
+    if (stage) stage.style.display = 'none';
+    if (resendBtn) resendBtn.style.display = 'none';
+    if (errorMsg) errorMsg.style.display = 'none';
+
+    title.textContent = 'Set New Password';
+    subtitle.innerHTML = `Identity verified for <strong style="color:#e0e7ff;">${userEmail}</strong>.<br>Enter and confirm your new secure clinician password.`;
+
+    if (resetStage) {
+      resetStage.style.display = 'block';
+    }
+    if (newPassword) {
+      setTimeout(() => newPassword.focus(), 150);
+    }
+  }
+
+  // Eye toggles for password fields
+  function setupEyeToggle(inputEl, toggleBtn) {
+    if (!inputEl || !toggleBtn) return;
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isPass = inputEl.type === 'password';
+      inputEl.type = isPass ? 'text' : 'password';
+      const icon = toggleBtn.querySelector('i');
+      if (icon) {
+        icon.className = isPass ? 'ri-eye-off-line' : 'ri-eye-line';
+      }
+    });
+  }
+  setupEyeToggle(newPassword, toggleEyeNew);
+  setupEyeToggle(confirmPassword, toggleEyeConfirm);
+
+  // Live Password Requirements Validator
+  if (newPassword) {
+    newPassword.addEventListener('input', () => {
+      const val = newPassword.value;
+      const hasLen = val.length >= 6;
+      const hasNum = /[0-9]/.test(val);
+      const hasCase = /[a-z]/.test(val) && /[A-Z]/.test(val);
+
+      function updateReq(el, isValid) {
+        if (!el) return;
+        if (isValid) {
+          el.classList.add('valid');
+          const icon = el.querySelector('i');
+          if (icon) icon.className = 'ri-checkbox-circle-fill';
+        } else {
+          el.classList.remove('valid');
+          const icon = el.querySelector('i');
+          if (icon) icon.className = 'ri-circle-line';
+        }
+      }
+
+      updateReq(reqChars, hasLen);
+      updateReq(reqNum, hasNum);
+      updateReq(reqCase, hasCase);
+
+      if (resetErrorMsg && resetErrorMsg.style.display === 'block') {
+        resetErrorMsg.style.display = 'none';
+      }
+    });
+  }
+
+  // Handle New Password Submission
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pass = newPassword ? newPassword.value : '';
+      const conf = confirmPassword ? confirmPassword.value : '';
+
+      if (resetErrorMsg) {
+        resetErrorMsg.style.display = 'none';
+        resetErrorMsg.textContent = '';
+      }
+
+      if (pass.length < 6) {
+        if (resetErrorMsg) {
+          resetErrorMsg.textContent = 'Password must be at least 6 characters long.';
+          resetErrorMsg.style.display = 'block';
+        }
+        if (newPassword) newPassword.focus();
+        return;
+      }
+
+      if (pass !== conf) {
+        if (resetErrorMsg) {
+          resetErrorMsg.textContent = 'Passwords do not match. Please verify and re-type.';
+          resetErrorMsg.style.display = 'block';
+        }
+        if (confirmPassword) confirmPassword.focus();
+        return;
+      }
+
+      if (btnSubmitResetPassword) {
+        btnSubmitResetPassword.disabled = true;
+        btnSubmitResetPassword.innerHTML = '<span>Updating Password...</span> <i class="ri-loader-4-line" style="animation:spin 1s linear infinite;"></i>';
+      }
+
+      try {
+        const res = await fetch('../api/auth/session.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'reset_password',
+            email: userEmail,
+            reset_token: currentResetToken,
+            password: pass
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          // Success celebration
+          if (resetStage) resetStage.style.display = 'none';
+          if (stage) stage.style.display = 'flex';
+          state = 'success';
+          spawnConfetti();
+          successWrap.classList.add('active');
+
+          title.textContent = 'Password Reset Successfully!';
+          subtitle.innerHTML = 'Your account credentials have been updated.<br>Redirecting to <strong>Login Portal</strong>…';
+
+          // Clear any stored sessions
+          sessionStorage.removeItem('auth_user');
+          sessionStorage.removeItem(COOLDOWN_KEY);
+
+          // Redirect to auth.html with success state
+          timers.push(setTimeout(() => {
+            window.location.href = `auth.html?reset=success&email=${encodeURIComponent(userEmail)}`;
+          }, 2000));
+
+        } else {
+          if (resetErrorMsg) {
+            resetErrorMsg.textContent = data.message || 'Failed to update password. Please try again.';
+            resetErrorMsg.style.display = 'block';
+          }
+          if (btnSubmitResetPassword) {
+            btnSubmitResetPassword.disabled = false;
+            btnSubmitResetPassword.innerHTML = '<span>Update Password</span> <i class="ri-arrow-right-line"></i>';
+          }
+        }
+      } catch (err) {
+        if (resetErrorMsg) {
+          resetErrorMsg.textContent = 'Connection error. Unable to reach server.';
+          resetErrorMsg.style.display = 'block';
+        }
+        if (btnSubmitResetPassword) {
+          btnSubmitResetPassword.disabled = false;
+          btnSubmitResetPassword.innerHTML = '<span>Update Password</span> <i class="ri-arrow-right-line"></i>';
+        }
+      }
     });
   }
 

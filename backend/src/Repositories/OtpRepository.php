@@ -205,14 +205,62 @@ class OtpRepository {
             ];
         }
 
-        // Success: Mark used
+        // Success: Mark used and issue single-use reset token (valid for 15 minutes)
+        $resetToken = bin2hex(random_bytes(24));
         $store[$matchedIndex]['status'] = 'used';
         $store[$matchedIndex]['verified_at'] = $now;
+        $store[$matchedIndex]['reset_token'] = $resetToken;
+        $store[$matchedIndex]['reset_token_expires_at'] = $now + 900; // 15 mins
         $this->saveStore($store);
 
         return [
-            'success'   => true,
-            'http_code' => 200
+            'success'     => true,
+            'http_code'   => 200,
+            'reset_token' => $resetToken
         ];
+    }
+
+    /**
+     * Validate single-use reset token for an email
+     */
+    public function verifyResetToken(string $email, string $token): bool {
+        $cleanEmail = strtolower(trim($email));
+        $cleanToken = trim($token);
+        if (empty($cleanEmail) || empty($cleanToken)) {
+            return false;
+        }
+
+        $now = time();
+        $store = $this->getStore();
+        foreach ($store as $entry) {
+            if (strcasecmp($entry['email'] ?? '', $cleanEmail) === 0) {
+                if (!empty($entry['reset_token']) && hash_equals($entry['reset_token'], $cleanToken)) {
+                    return !empty($entry['reset_token_expires_at']) && $now <= (int)$entry['reset_token_expires_at'];
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Invalidate reset token after successful password reset
+     */
+    public function invalidateResetToken(string $email): bool {
+        $cleanEmail = strtolower(trim($email));
+        $store = $this->getStore();
+        $updated = false;
+
+        foreach ($store as &$entry) {
+            if (strcasecmp($entry['email'] ?? '', $cleanEmail) === 0) {
+                unset($entry['reset_token'], $entry['reset_token_expires_at']);
+                $updated = true;
+            }
+        }
+        unset($entry);
+
+        if ($updated) {
+            return $this->saveStore($store);
+        }
+        return false;
     }
 }

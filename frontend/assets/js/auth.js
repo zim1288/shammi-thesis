@@ -27,6 +27,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const strengthIcon = document.getElementById('strengthIcon');
   const passwordStrengthContainer = document.getElementById('passwordStrengthContainer');
 
+  // Check for successful password reset redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('reset') === 'success') {
+    const successMsg = document.getElementById('loginSuccessMsg');
+    if (successMsg) {
+      successMsg.innerHTML = '<i class="ri-checkbox-circle-fill" style="margin-right:4px; vertical-align: -1px;"></i> Password reset successfully! Please log in with your new credentials.';
+      successMsg.style.display = 'block';
+    }
+    const emailParam = urlParams.get('email');
+    const loginUser = document.getElementById('loginUsername');
+    if (emailParam && loginUser) {
+      loginUser.value = emailParam;
+      const loginPass = document.getElementById('loginPassword');
+      if (loginPass) setTimeout(() => loginPass.focus(), 200);
+    }
+  }
+
   // =========================================================================
   // 2. MOUSE POINTER AMBIENT LIGHT
   // =========================================================================
@@ -174,6 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e) e.preventDefault();
     const submitBtn = document.getElementById('btnSubmitLogin');
     const errBox = document.getElementById('loginErrorMsg');
+    const successBox = document.getElementById('loginSuccessMsg');
+    if (successBox) successBox.style.display = 'none';
     if (errBox) {
       errBox.style.display = 'none';
       errBox.textContent = '';

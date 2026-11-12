@@ -82,8 +82,9 @@ if ($action === 'request' || $action === 'resend') {
     $_SESSION['role']      = 'attending_physician';
 
     Response::success([
-        'verified'   => true,
-        'user'       => [
+        'verified'    => true,
+        'reset_token' => $res['reset_token'] ?? null,
+        'user'        => [
             'id'            => $_SESSION['user_id'],
             'username'      => $_SESSION['username'],
             'email'         => $_SESSION['email'],
