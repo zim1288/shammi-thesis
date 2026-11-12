@@ -111,7 +111,7 @@ if ($action === 'login') {
 } elseif ($action === 'reset_password') {
     $email       = strtolower(trim($request->get('email', '')));
     $newPassword = $request->getRaw('password', $request->getRaw('new_password', ''));
-    $resetToken  = trim($request->get('reset_token', ''));
+    $resetToken  = trim($request->get('reset_token', $request->get('token', '')));
 
     if (empty($email) || empty($newPassword)) {
         Response::error('Email and new password are required.', 422);
