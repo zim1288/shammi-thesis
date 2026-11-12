@@ -378,7 +378,8 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* 5. Modal Backdrop & Container Styles */
+/* 5. Modal Backdrop & Container Styles (Supports both .modal-overlay and .modal-backdrop) */
+.modal-overlay,
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -387,6 +388,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: none;
   align-items: center;
   justify-content: center;
@@ -394,10 +396,12 @@
   padding: 20px;
 }
 
+.modal-overlay.active,
 .modal-backdrop.active {
-  display: flex;
+  display: flex !important;
 }
 
+.modal-container,
 .modal-card {
   background: #0d1527;
   border: 1px solid var(--border-highlight);
@@ -409,6 +413,7 @@
   padding: 28px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
   animation: modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
 @keyframes modal-enter {
@@ -443,15 +448,18 @@
   margin-top: 2px;
 }
 
+.modal-close-btn,
 .btn-close-modal {
   background: transparent;
   border: none;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.2s;
+  line-height: 1;
 }
 
+.modal-close-btn:hover,
 .btn-close-modal:hover {
   color: #ffffff;
 }

@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // 1. URL Query Parameter for Dynamic Patient Routing
   const urlParams = new URLSearchParams(window.location.search);
-  const currentPatientId = urlParams.get('patient_id') || APP_CONFIG.defaultPatientId;
+  let currentPatientId = urlParams.get('patient_id') || sessionStorage.getItem('active_patient_id') || (window.APP_CONFIG ? window.APP_CONFIG.defaultPatientId : '') || '';
 
   // Initialize ECG Canvas
   const ecgRenderer = new ECGWaveformRenderer('liveEcgCanvas', {
@@ -56,6 +56,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const patient = data.patient || {};
     currentPatientData = patient;
     window.currentPatientData = patient;
+
+    // Sync active patient ID to session and address bar
+    if (patient.id && patient.id !== 'UNASSIGNED') {
+      currentPatientId = patient.id;
+      sessionStorage.setItem('active_patient_id', patient.id);
+      if (!urlParams.get('patient_id')) {
+        window.history.replaceState(null, '', `?patient_id=${encodeURIComponent(patient.id)}`);
+      }
+    }
 
     // Update dynamic CSV link for this patient
     const csvLink = document.getElementById('btnExportCsvLink');

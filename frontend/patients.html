@@ -6,7 +6,7 @@
   <title>Central Doctor Dashboard — Patient Directory & IoT Device Pairing</title>
   
   <!-- Clinical HUD Styling & Icons -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261112_08">
 
   <!-- Production Authentication Guard (Enforces Login First) -->
   <script src="js/auth_guard.js"></script>
@@ -64,7 +64,7 @@
           <i class="ri-hospital-line"></i>
           <span>Patient Roster</span>
         </a>
-        <a href="index.html?patient_id=PT-8802" class="nav-btn">
+        <a id="navDedicatedTelemetry" href="index.html" class="nav-btn">
           <i class="ri-dashboard-line"></i>
           <span>Dedicated Telemetry</span>
         </a>
@@ -231,8 +231,8 @@
               <i class="ri-user-add-line"></i>
             </div>
             <div>
-              <h2 style="font-size: 18px; font-weight: 700; color: #ffffff;">Discharge Patient & Pair IoT Hardware</h2>
-              <p style="font-size: 12px; color: var(--text-muted);">Free up acute hospital beds by provisioning wearable telemetry</p>
+              <h2 style="font-size: 18px; font-weight: 700; color: #ffffff;">Enroll Patient & Pair IoT Hardware</h2>
+              <p style="font-size: 12px; color: var(--text-muted);">Register a new patient and pair a wearable ESP32 telemetry node</p>
             </div>
           </div>
           <button id="btnCloseAddModal" class="modal-close-btn">&times;</button>
@@ -321,8 +321,8 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Discharge Medical Notes</label>
-              <textarea id="inputMedicalNotes" class="form-control" rows="2" placeholder="e.g. Stabilized post-laparoscopy. Bed freed for incoming acute emergency admissions."></textarea>
+              <label class="form-label">Clinical / Admission Notes</label>
+              <textarea id="inputMedicalNotes" class="form-control" rows="2" placeholder="e.g. Post-stabilization monitoring. Telemetry ongoing."></textarea>
             </div>
           </div>
 
@@ -332,8 +332,8 @@
               Cancel
             </button>
             <button type="submit" class="nav-btn primary" style="padding: 10px 22px;">
-              <i class="ri-check-line"></i>
-              <span>Complete Discharge & Pair Device</span>
+              <i class="ri-user-add-line"></i>
+              <span>Enroll Patient & Pair Device</span>
             </button>
           </div>
 
@@ -396,8 +396,8 @@
   </div>
 
   <!-- PATIENT DIRECTORY MODULAR SCRIPTS (Cache-busted) -->
-  <script src="js/modules/patient_api.js?v=20261112_07"></script>
-  <script src="js/modules/patient_ui.js?v=20261112_07"></script>
-  <script src="js/patients.js?v=20261112_07"></script>
+  <script src="js/modules/patient_api.js?v=20261112_08"></script>
+  <script src="js/modules/patient_ui.js?v=20261112_08"></script>
+  <script src="js/patients.js?v=20261112_08"></script>
 </body>
 </html>

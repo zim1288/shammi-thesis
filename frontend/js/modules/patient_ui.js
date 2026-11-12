@@ -72,18 +72,11 @@
               <i class="ri-hotel-bed-line"></i> Origin: <strong>${this.escapeHtml(p.ward_origin)}</strong>
             </div>
 
-            <!-- Dynamic Hardware Node Association Strip (Green = Online, Red = Offline) -->
+            <!-- Hardware Node Association (Dot indicates liveness: Green = Online, Red = Offline) -->
             <div class="device-pairing-strip">
               <span style="display:flex; align-items:center; gap:8px;">
-                <span class="device-status-dot ${dotStateClass}"></span>
-                <strong>${this.escapeHtml(deviceUid)}</strong>
-                <span class="device-status-pill ${dotStateClass}">${pillLabel}</span>
-              </span>
-              <span style="color:var(--text-muted); font-size:11px;">
-                ${isOnline && deviceRssi !== null
-                  ? `<i class="ri-wifi-line" style="color:#10b981;"></i> ${deviceRssi} dBm &nbsp;|&nbsp; <i class="ri-battery-charge-line" style="color:#38bdf8;"></i> ${deviceBatt}%`
-                  : `<span style="color:#94a3b8;"><i class="ri-wifi-off-line" style="color:#f87171; margin-right:2px;"></i> Disconnected</span>`
-                }
+                <span class="device-status-dot ${dotStateClass}" title="${isOnline ? 'ESP32 Node Online' : 'ESP32 Node Offline'}"></span>
+                <strong style="letter-spacing:0.02em;">${this.escapeHtml(deviceUid)}</strong>
               </span>
             </div>
 
@@ -110,7 +103,7 @@
           </div>
 
           <!-- Click Through Action -->
-          <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="patient-action-btn">
+          <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="patient-action-btn" onclick="sessionStorage.setItem('active_patient_id', '${encodeURIComponent(p.id)}');">
             <i class="ri-pulse-line"></i>
             <span>Open Dedicated Telemetry →</span>
           </a>
@@ -152,16 +145,9 @@
             ${p.discharge_date}
           </td>
           <td>
-            <div style="display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:12px;">
-              <span class="device-status-dot ${dotStateClass}"></span>
+            <div style="display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:12px;">
+              <span class="device-status-dot ${dotStateClass}" title="${isOnline ? 'ESP32 Node Online' : 'ESP32 Node Offline'}"></span>
               <strong>${this.escapeHtml(deviceUid)}</strong>
-              <span class="device-status-pill ${dotStateClass}">${pillLabel}</span>
-            </div>
-            <div style="font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; margin-top:3px;">
-              ${isOnline && p.assigned_device?.wifi_rssi !== null
-                ? `WiFi: ${p.assigned_device.wifi_rssi} dBm | Batt: ${p.assigned_device.battery_level}%`
-                : 'MAC: ' + this.escapeHtml(p.assigned_device?.device_mac || 'N/A')
-              }
             </div>
           </td>
           <td>
@@ -171,7 +157,7 @@
           </td>
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
-              <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="nav-btn primary" style="padding:6px 12px; font-size:12px;">
+              <a href="index.html?patient_id=${encodeURIComponent(p.id)}" class="nav-btn primary" style="padding:6px 12px; font-size:12px;" onclick="sessionStorage.setItem('active_patient_id', '${encodeURIComponent(p.id)}');">
                 <i class="ri-pulse-line"></i>
                 <span>Monitor</span>
               </a>

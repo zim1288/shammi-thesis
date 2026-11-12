@@ -42,7 +42,11 @@ class IngestionService {
         if (!empty($patient['id'])) {
             return $patient['id'];
         }
-        return 'PT-8802';
+        $all = $this->patientRepo->getAll();
+        if (!empty($all)) {
+            return $all[0]['id'] ?? $all[0]['patient_code'];
+        }
+        return 'UNASSIGNED';
     }
 
     public function processVitals(array $payload): array {

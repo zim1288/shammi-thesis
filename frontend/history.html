@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Historical Biosignals & Research CSV Export</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261112_08">
 
   <!-- Production Authentication Guard (Enforces Login First) -->
   <script src="js/auth_guard.js"></script>
@@ -36,7 +36,7 @@
         </a>
         <a href="index.html" class="nav-btn">
           <i class="ri-dashboard-line"></i>
-          <span>Live HUD</span>
+          <span>Dedicated Telemetry</span>
         </a>
         <a href="history.html" class="nav-btn active">
           <i class="ri-line-chart-line"></i>
@@ -148,7 +148,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const patientId = urlParams.get('patient_id') || APP_CONFIG.defaultPatientId;
+      const patientId = urlParams.get('patient_id') || sessionStorage.getItem('active_patient_id') || (window.APP_CONFIG ? window.APP_CONFIG.defaultPatientId : '') || '';
 
       const telemetryTableBody = document.getElementById('historyTableBody');
       const manualTableBody    = document.getElementById('manualHistoryTableBody');

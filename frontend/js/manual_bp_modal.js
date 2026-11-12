@@ -27,7 +27,7 @@
     // Get current patient from URL query or app configuration
     function getActivePatientId() {
       const params = new URLSearchParams(window.location.search);
-      return params.get('patient_id') || (window.APP_CONFIG ? window.APP_CONFIG.defaultPatientId : 'PT-8802');
+      return params.get('patient_id') || sessionStorage.getItem('active_patient_id') || (window.APP_CONFIG ? window.APP_CONFIG.defaultPatientId : '') || '';
     }
 
     // Open Modal and hydrate patient info + CSRF token

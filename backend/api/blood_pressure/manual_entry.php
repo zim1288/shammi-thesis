@@ -24,7 +24,12 @@ Security::enforceCsrf($request);
 // 2. Validate clinical ranges
 $systolicBp  = (int)$request->get('systolic_bp', 0);
 $diastolicBp = (int)$request->get('diastolic_bp', 0);
-$patientId   = $request->get('patient_id', 'PT-8802');
+$patientId = $request->get('patient_id', '');
+if (empty($patientId)) {
+    $patientRepo = new \App\Repositories\PatientRepository();
+    $all = $patientRepo->getAll();
+    $patientId = !empty($all) ? ($all[0]['id'] ?? $all[0]['patient_code']) : 'UNASSIGNED';
+}
 
 if ($systolicBp < 50 || $systolicBp > 260) {
     Response::error('Systolic BP must be between 50 and 260 mmHg.', 422);

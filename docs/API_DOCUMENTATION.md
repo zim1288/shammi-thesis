@@ -176,7 +176,7 @@ Returns single-patient real-time aggregated telemetry, including patient profile
       "patient": {
         "id": "PT-8802",
         "patient_code": "PT-8802",
-        "full_name": "Robert Vance",
+        "full_name": "Mohammad Harun",
         "room_bed": "Discharged Home",
         "age": 58,
         "gender": "Male",
@@ -328,7 +328,7 @@ Discharges/deletes a patient record, automatically unpairs their associated wear
   {
     "success": true,
     "ok": true,
-    "message": "Patient Robert Vance (#PT-8802) has been successfully discharged and removed.",
+    "message": "Patient Mohammad Harun (#PT-8802) has been successfully discharged and removed.",
     "timestamp": "2026-11-12T21:26:00+06:00",
     "data": {
       "deleted_patient_id": "PT-8802",
@@ -460,7 +460,7 @@ The database maintains 6 collections with the following document schemas:
   "_id": { "$oid": "672b800024a1b023f0a1c020" },
   "id": "PT-8802",
   "patient_code": "PT-8802",
-  "full_name": "Robert Vance",
+  "full_name": "Mohammad Harun",
   "age": 58,
   "gender": "Male",
   "phone": "+880 1711-002233",

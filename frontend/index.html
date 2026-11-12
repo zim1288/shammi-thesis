@@ -6,7 +6,7 @@
   <title>Clinical Telemetry HUD — ESP32 Home Patient Monitoring System</title>
   
   <!-- Modern HUD Styling & Typography -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261112_08">
 
   <!-- Production Authentication Guard (Enforces Login First) -->
   <script src="js/auth_guard.js"></script>
@@ -27,9 +27,9 @@
         <span style="font-size: 11px; opacity: 0.85;">Engineering Research Demonstration v1.2</span>
       </div>
       <div id="headerPatientTag" style="display: flex; align-items: center; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
-        <span>PATIENT: <strong>ROBERT VANCE (#PT-8802)</strong></span>
+        <span>PATIENT: <strong>LOADING...</strong></span>
         <span>•</span>
-        <span>ORIGIN: <strong>ICU STEP-DOWN (BED 04)</strong></span>
+        <span>ORIGIN: <strong>HOME TELEMETRY</strong></span>
       </div>
     </div>
 
@@ -72,7 +72,7 @@
         </a>
         <a href="index.html" class="nav-btn active">
           <i class="ri-dashboard-line"></i>
-          <span>Live HUD</span>
+          <span>Dedicated Telemetry</span>
         </a>
         <a href="history.html" class="nav-btn">
           <i class="ri-line-chart-line"></i>
@@ -104,36 +104,36 @@
       
       <!-- Left: Patient Avatar & Demographics -->
       <div class="patient-hero-main">
-        <div id="profilePatientAvatar" class="patient-hero-avatar">RV</div>
+        <div id="profilePatientAvatar" class="patient-hero-avatar">--</div>
         <div class="patient-hero-details">
           <div class="patient-hero-title-row">
-            <h2 id="profilePatientName" class="patient-hero-name">Robert Vance</h2>
-            <span id="profilePatientCode" class="patient-hero-code">#PT-8802</span>
+            <h2 id="profilePatientName" class="patient-hero-name">Loading Patient Profile...</h2>
+            <span id="profilePatientCode" class="patient-hero-code">#--</span>
             <span id="profilePatientRiskBadge" class="status-badge" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); font-size: 11px; padding: 3px 10px; border-radius: 999px;">
-              ● STABLE / LOW RISK
+              ● ACTIVE
             </span>
           </div>
 
           <div class="patient-hero-meta-row">
             <span id="profilePatientMeta">
-              <i class="ri-user-line" style="color: #818cf8;"></i> 58 Yrs • Male
+              <i class="ri-user-line" style="color: #818cf8;"></i> -- Yrs • --
             </span>
             <span>•</span>
             <span id="profilePatientWard">
-              <i class="ri-hotel-bed-line" style="color: #38bdf8;"></i> Ward: ICU Step-Down
+              <i class="ri-hotel-bed-line" style="color: #38bdf8;"></i> Ward: --
             </span>
             <span>•</span>
             <span id="profilePatientRoom">
-              <i class="ri-map-pin-2-line" style="color: #06b6d4;"></i> Bed 04 / Room 402
+              <i class="ri-map-pin-2-line" style="color: #06b6d4;"></i> Bed: --
             </span>
             <span>•</span>
             <span id="profilePatientDevice">
-              <i class="ri-cpu-line" style="color: #a5b4fc;"></i> Paired Node: ESP32-NODE-01
+              <i class="ri-cpu-line" style="color: #a5b4fc;"></i> Paired Node: --
             </span>
           </div>
 
           <p id="profilePatientNotes" style="font-size: 12px; color: #94a3b8; margin-top: 4px; line-height: 1.5; max-width: 750px;">
-            Post-CABG surgery recovery. Ward bed decongested for incoming emergency admissions. Continuous ECG & SpO₂ telemetry required.
+            Continuous physiological telemetry monitoring.
           </p>
         </div>
       </div>
@@ -561,10 +561,10 @@
         <div style="background: rgba(129, 140, 248, 0.08); border: 1px solid rgba(129, 140, 248, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
           <div>
             <span style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; display: block;">Recording Measurement For</span>
-            <strong id="modalBpPatientName" style="color: #ffffff; font-size: 15px;">Robert Vance</strong>
+            <strong id="modalBpPatientName" style="color: #ffffff; font-size: 15px;">Active Patient</strong>
           </div>
           <div style="text-align: right;">
-            <span id="modalBpPatientCode" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 6px; font-weight: 700;">#PT-8802</span>
+            <span id="modalBpPatientCode" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 4px 10px; border-radius: 6px; font-weight: 700;">#PT-XXXX</span>
           </div>
         </div>
 
@@ -640,9 +640,9 @@
   </div>
 
   <!-- APPLICATION CONTROLLER SCRIPTS -->
-  <script src="js/config.js"></script>
-  <script src="js/ecg_canvas.js"></script>
-  <script src="js/manual_bp_modal.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script src="js/config.js?v=20261112_08"></script>
+  <script src="js/ecg_canvas.js?v=20261112_08"></script>
+  <script src="js/manual_bp_modal.js?v=20261112_08"></script>
+  <script src="js/dashboard.js?v=20261112_08"></script>
 </body>
 </html>

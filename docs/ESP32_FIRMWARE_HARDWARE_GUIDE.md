@@ -85,7 +85,7 @@ When your firmware sends sensor data, the backend matches the `device_uid` and `
 
 | Device UID | Assigned Patient ID | Patient Full Name | Ward & Room Bed | Baseline Thresholds |
 | :--- | :--- | :--- | :--- | :--- |
-| **`ESP32-NODE-01`** | **`PT-8802`** | **Robert Vance** | Bed 04 / Room 402 (ICU Step-Down) | HR: 55–105, SpO2: ≥94%, Temp: ≤37.8°C |
+| **`ESP32-NODE-01`** | **`PT-8802`** | **Mohammad Harun** | Bed 04 / Room 402 (ICU Step-Down) | HR: 55–105, SpO2: ≥94%, Temp: ≤37.8°C |
 | **`ESP32-NODE-02`** | **`PT-4091`** | **Nasreen Akter** | Bed 12 / Post-Op (Post-Operative Ward) | HR: 60–110, SpO2: ≥95%, Temp: ≤38.0°C |
 | **`ESP32-NODE-03`** | **`PT-7124`** | **Anisur Rahman** | Bed 02 / Emergency (Observation Ward) | HR: 55–100, SpO2: ≥94%, Temp: ≤37.5°C |
 | **`ESP32-NODE-04`** | **`PT-5518`** | **Tahmina Begum** | Bed 09 / Cardiology (Cardio Step-Down) | HR: 50–115, SpO2: ≥92%, Temp: ≤38.2°C |
@@ -259,4 +259,4 @@ curl -X POST "https://shammi-thesis.onrender.com/api/v1/readings" \
   }'
 ```
 
-If you receive HTTP 201 `Vitals telemetry recorded successfully`, open `https://shammi-thesis.onrender.com/frontend/telemetry.html` and watch the vitals immediately update on Robert Vance's card!
+If you receive HTTP 201 `Vitals telemetry recorded successfully`, open `https://shammi-thesis.onrender.com/frontend/index.html` and watch the vitals immediately update on the patient's card!

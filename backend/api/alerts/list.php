@@ -11,7 +11,12 @@ use App\Core\Request;
 use App\Repositories\AlertRepository;
 
 $request = new Request();
-$patientId  = $request->get('patient_id', 'PT-8802');
+$patientId = $request->get('patient_id', '');
+if (empty($patientId)) {
+    $patientRepo = new \App\Repositories\PatientRepository();
+    $all = $patientRepo->getAll();
+    $patientId = !empty($all) ? ($all[0]['id'] ?? $all[0]['patient_code']) : 'UNASSIGNED';
+}
 $activeOnly = (bool)$request->get('active_only', 0);
 $limit      = min((int)$request->get('limit', 30), 100);
 

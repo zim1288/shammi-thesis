@@ -61,6 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
         allPatients = json.data.patients || [];
         updateKpiStats(json.data.stats || {});
         renderRoster();
+
+        // Dynamically point navbar "Dedicated Telemetry" button to active or first patient
+        const navTele = document.getElementById('navDedicatedTelemetry');
+        if (navTele && allPatients.length > 0) {
+          const activeId = sessionStorage.getItem('active_patient_id') || allPatients[0].id;
+          navTele.href = `index.html?patient_id=${encodeURIComponent(activeId)}`;
+        }
       }
     } catch (err) {
       console.warn('Roster refresh warning:', err);

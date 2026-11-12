@@ -42,6 +42,6 @@ const APP_CONFIG = {
   // Telemetry Polling fallback (ms) when MQTT is disabled or unavailable
   pollingIntervalMs: 2500,
 
-  // Selected Patient ID (Matching MongoDB Document)
-  defaultPatientId: 'PT-8802'
+  // Selected Patient ID (Defaults to empty string to dynamically load from active session or first enrolled patient)
+  defaultPatientId: ''
 };

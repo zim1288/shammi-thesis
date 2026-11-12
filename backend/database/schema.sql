@@ -192,7 +192,7 @@ INSERT INTO `user_accounts` (`id`, `username`, `email`, `password_hash`, `full_n
 
 -- Default Subject/Patient
 INSERT INTO `patients` (`id`, `patient_code`, `full_name`, `age`, `gender`, `room_bed`, `medical_notes`) VALUES
-(1, 'PT-8802', 'Robert Vance', 58, 'Male', 'Bed 04 / Room 402', 'Baseline sinus rhythm monitoring under research protocol #ESP-2026.');
+(1, 'PT-8802', 'Mohammad Harun', 58, 'Male', 'Bed 04 / Room 402', 'Baseline sinus rhythm monitoring under research protocol #ESP-2026.');
 
 -- Default ESP32 Device
 INSERT INTO `devices` (`id`, `device_uid`, `device_name`, `assigned_patient_id`, `status`, `battery_level`, `wifi_rssi`, `ip_address`, `firmware_version`, `last_heartbeat`) VALUES

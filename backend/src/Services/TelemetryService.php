@@ -34,14 +34,27 @@ class TelemetryService {
 
     public function getDashboardTelemetry(string $patientId): array {
         // 1. Patient Profile
-        $patient = $this->patientRepo->findById($patientId) ?: [
-            'id'           => $patientId,
-            'patient_code' => $patientId,
-            'full_name'    => 'Robert Vance',
-            'room_bed'     => 'Bed 04 / Room 402',
-            'age'          => 58,
-            'gender'       => 'Male'
-        ];
+        $patient = null;
+        if (!empty($patientId) && $patientId !== 'PT-8802') {
+            $patient = $this->patientRepo->findById($patientId);
+        }
+        if (!$patient) {
+            $all = $this->patientRepo->getAll();
+            if (!empty($all)) {
+                $patient = $all[0];
+            } else {
+                $patient = [
+                    'id'           => $patientId ?: 'UNASSIGNED',
+                    'patient_code' => $patientId ?: 'UNASSIGNED',
+                    'full_name'    => 'No Active Patient Selected',
+                    'ward_origin'  => 'None',
+                    'room_bed'     => 'No Ward Bed Assigned',
+                    'age'          => '--',
+                    'gender'       => 'N/A',
+                    'medical_notes'=> 'No active patient profile found in database. Please enroll a patient from the Patient Roster.'
+                ];
+            }
+        }
 
         // 2. Hardware Device State
         $assignedDeviceUid = $patient['assigned_device_uid'] ?? 'ESP32-NODE-01';
