@@ -73,7 +73,20 @@ if ($action === 'request' || $action === 'resend') {
         Response::error($res['error'], $res['http_code'] ?? 400, $extra);
     }
 
-    // Auto-authenticate verified user session
+    $flow = strtolower(trim($request->get('flow', $request->get('action_type', ''))));
+    $isForgotPassword = ($flow === 'forgot_password');
+
+    if ($isForgotPassword) {
+        // For password reset, do NOT authenticate clinician session prematurely.
+        // Clinician must first set their new password on reset_password.html and then login.
+        Response::success([
+            'verified'    => true,
+            'flow'        => 'forgot_password',
+            'reset_token' => $res['reset_token'] ?? null
+        ], 'Identity verified successfully. Please set your new password.');
+    }
+
+    // Auto-authenticate verified user session (e.g. for registration)
     session_regenerate_id(true);
     $_SESSION['user_id']   = 'USR-' . strtoupper(substr(md5($email), 0, 6));
     $_SESSION['username']  = $email;

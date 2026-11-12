@@ -323,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'verify',
+            flow: userAction,
             email: userEmail,
             otp: enteredOtp,
             name: userName
@@ -333,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         timers.push(setTimeout(() => {
           if (res.ok && json.success) {
-            if (userAction === 'forgot_password') {
+            if (userAction === 'forgot_password' || json.data?.flow === 'forgot_password') {
               const resetToken = json.data?.reset_token || '';
               handleForgotPasswordRedirect(resetToken);
             } else {
@@ -373,20 +374,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1500));
   }
 
-  // Success State
+  // Success State (Only for account registration)
   function handleSuccess(verifiedUser) {
+    if (userAction === 'forgot_password') {
+      handleForgotPasswordRedirect('');
+      return;
+    }
+
     state = 'success';
     loadingWrap.classList.remove('active');
     spawnConfetti();
     successWrap.classList.add('active');
 
-    if (userAction === 'forgot_password') {
-      title.textContent = 'Identity Verified';
-      subtitle.innerHTML = `Access restored for <strong>${userEmail}</strong>. Redirecting to <strong>Doctor Portal</strong>…`;
-    } else {
-      title.textContent = 'Access Granted';
-      subtitle.innerHTML = 'Identity authenticated. Redirecting to <strong>Doctor Portal & Patient Directory</strong>…';
-    }
+    title.textContent = 'Access Granted';
+    subtitle.innerHTML = 'Identity authenticated. Redirecting to <strong>Doctor Portal & Patient Directory</strong>…';
     if (resendBtn) resendBtn.style.display = 'none';
 
     // Store authenticated state in sessionStorage

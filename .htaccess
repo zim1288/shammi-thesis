@@ -37,9 +37,16 @@ DirectoryIndex index.php index.html
     Require all denied
 </FilesMatch>
 
-# Enable CORS headers for IoT Hardware ingestion
+# Enable CORS headers for IoT Hardware ingestion and prevent stale browser caching
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token"
     Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+
+    # Ensure frontend UI and scripts always fetch fresh updates immediately
+    <FilesMatch "\.(html|js)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
 </IfModule>
