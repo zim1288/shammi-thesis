@@ -21,6 +21,24 @@ class DeviceRepository {
     }
 
     public function updateTelemetry(string $deviceUid, array $telemetry): int {
+        $existing = $this->findByUid($deviceUid);
+        if (!$existing) {
+            $this->create([
+                'device_uid'          => $deviceUid,
+                'device_name'         => "Wearable Node ({$deviceUid})",
+                'assigned_patient_id' => null,
+                'mac_address'         => $telemetry['mac_address'] ?? 'Auto-detected',
+                'status'              => 'online',
+                'battery_level'       => isset($telemetry['battery_level']) ? (int)$telemetry['battery_level'] : null,
+                'wifi_rssi'           => isset($telemetry['wifi_rssi']) ? (int)$telemetry['wifi_rssi'] : null,
+                'ip_address'          => $telemetry['ip_address'] ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'),
+                'firmware_version'    => '1.2.0',
+                'last_heartbeat'      => date('c'),
+                'created_at'          => date('c')
+            ]);
+            return 1;
+        }
+
         $update = [
             'status'         => 'online',
             'last_heartbeat' => date('c')
