@@ -1,27 +1,42 @@
 /**
  * ESP32 Hardware Configuration Template
+ * Continuous Patient Telemetry & Ward Decongestion Prototype
  * 
- * INSTRUCTIONS FOR HARDWARE ENGINEER:
+ * INSTRUCTIONS FOR HARDWARE / IOT ENGINEER:
  * 1. Copy this file and save it as "config.h" in this same directory.
- * 2. Put your real Wi-Fi SSID, Password, and Render API Bearer Token in "config.h".
- * 3. Never commit "config.h" to Git (it is already in .gitignore).
+ * 2. Put your real Wi-Fi SSID, Password, and API Bearer Token in "config.h".
+ * 3. Never commit "config.h" to Git (it is protected by .gitignore).
  */
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Wi-Fi Access Point Credentials
+// =============================================================================
+// 1. WI-FI CREDENTIALS
+// =============================================================================
 #define WIFI_SSID        "YOUR_WIFI_SSID"
 #define WIFI_PASSWORD    "YOUR_WIFI_PASSWORD"
 
-// Cloud API Endpoints
+// =============================================================================
+// 2. CLOUD BACKEND ENDPOINTS & AUTHENTICATION
+// =============================================================================
 #define SERVER_URL_VITALS "https://shammi-thesis.onrender.com/api/v1/readings"
 #define SERVER_URL_ECG    "https://shammi-thesis.onrender.com/api/v1/ecg"
 
-// Ingestion Bearer Token (Matches Render API_INGEST_KEY environment variable)
-#define API_BEARER_TOKEN  "YOUR_API_INGEST_KEY_HERE"
+// Ingestion Bearer Token (Matches Render's API_INGEST_KEY environment variable)
+#define API_BEARER_TOKEN  "shammi_thesis_2026"
 
-// Device & Patient Mapping (Must match active patient on Doctor Portal)
-#define DEVICE_UID        "ESP32-NODE-01"
-#define PATIENT_ID        "PT-8802"
+// =============================================================================
+// 3. DEVICE & PATIENT PAIRING CONFIGURATION
+// =============================================================================
+// Physical Device UID (Must match the "PHYSICAL IOT DEVICE UID" assigned in Dashboard)
+#define DEVICE_UID        "ESP32-NODE-02"
+
+// METHOD A (RECOMMENDED): Leave PATIENT_ID empty ("").
+// The cloud backend automatically resolves which patient is currently assigned
+// to this DEVICE_UID in the hospital database. Discharged/reassigned beds update dynamically!
+#define PATIENT_ID        ""
+
+// METHOD B (ALTERNATIVE): Hardcode dedicated research subject (e.g. "PT-8802")
+// #define PATIENT_ID     "PT-8802"
 
 #endif // CONFIG_H

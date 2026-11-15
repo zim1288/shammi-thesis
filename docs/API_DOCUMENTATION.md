@@ -43,25 +43,37 @@ The system uses separated authentication models tailored for IoT hardware vs. hu
 ### 1. POST /api/v1/readings
 Ingests periodic low-frequency physiological vitals from the ESP32 (MAX30102 PPG, MLX90614 IR Temp, AD8232 Lead status).
 
+> [!TIP]
+> **Dynamic Patient Auto-Resolution (Method A):** If `"patient_id"` is left blank `""` or omitted, the backend (`IngestionService`) automatically looks up the patient currently assigned to `"device_uid"` in the hospital database.
+
 * **Headers:**
   ```http
   Content-Type: application/json
-  Authorization: Bearer <YOUR_API_INGEST_KEY>
+  Authorization: Bearer shammi_thesis_2026
   ```
 * **Request Payload (JSON):**
   ```json
   {
-    "device_uid": "ESP32-NODE-01",
-    "patient_id": "PT-8802",
+    "device_uid": "ESP32-NODE-02",
+    "patient_id": "",
+    "heart_rate": 74,
     "ecg_heart_rate": 74,
     "max30102_pulse_rate": 73,
     "spo2": 98.4,
+    "temperature": 36.6,
     "ir_temperature": 36.6,
     "ecg_lead_status": "normal",
     "ppg_finger_detected": 1,
     "battery_level": 92,
     "wifi_rssi": -64,
-    "timestamp": "2026-11-06T15:30:00+06:00"
+    "local_alert_level": "green",
+    "local_alert_reason": "All Vitals Normal",
+    "sensor_fault": false,
+    "physiological_alert": false,
+    "buzzer_muted": false,
+    "max30102_sensor_ok": true,
+    "mlx90614_sensor_ok": true,
+    "timestamp": "2026-11-13T02:30:00+06:00"
   }
   ```
 * **Response (`201 Created`):**

@@ -300,43 +300,53 @@ The repository includes a ready-to-deploy [`render.yaml`](file:///e:/New%20folde
 
 
 ### Ingestion Authentication
-All hardware requests from ESP32 nodes must include the Bearer token configured in your Render environment:
+All hardware requests from ESP32 nodes must include the Bearer token configured in your Render environment (`API_INGEST_KEY`):
 ```http
-Authorization: Bearer <YOUR_API_INGEST_KEY>
+Authorization: Bearer shammi_thesis_2026
 Content-Type: application/json
 ```
 
 ### 1. Ingest Periodic Sensor Vitals
-`POST /api/ingest/vitals.php`
+`POST /api/v1/readings` *(or `/api/ingest/vitals.php`)*
+
+> **Dynamic Auto-Resolution (Method A):** Leave `"patient_id": ""` blank so the backend automatically pairs the telemetry with whichever patient is assigned to `"device_uid": "ESP32-NODE-02"` in the database.
 
 ```json
 {
-  "device_uid": "ESP32-NODE-01",
-  "patient_id": "PT-8802",
+  "device_uid": "ESP32-NODE-02",
+  "patient_id": "",
+  "heart_rate": 74,
   "ecg_heart_rate": 74,
   "max30102_pulse_rate": 73,
   "spo2": 98.4,
+  "temperature": 36.6,
   "ir_temperature": 36.6,
   "ecg_lead_status": "normal",
   "ppg_finger_detected": 1,
-  "battery_level": 92,
-  "wifi_rssi": -64,
-  "timestamp": "2026-11-06T15:30:00+06:00"
+  "battery_level": 94,
+  "wifi_rssi": -62,
+  "local_alert_level": "green",
+  "local_alert_reason": "All Vitals Normal",
+  "sensor_fault": false,
+  "physiological_alert": false,
+  "buzzer_muted": false,
+  "max30102_sensor_ok": true,
+  "mlx90614_sensor_ok": true
 }
 ```
 
 ### 2. Ingest High-Speed ECG Waveform Batch
-`POST /api/ingest/ecg_batch.php`
+`POST /api/v1/ecg` *(or `/api/ingest/ecg_batch.php`)*
 
 ```json
 {
-  "device_uid": "ESP32-NODE-01",
-  "patient_id": "PT-8802",
+  "device_uid": "ESP32-NODE-02",
+  "patient_id": "",
   "sample_rate_hz": 125,
   "lead_name": "Lead-II",
-  "samples": [0.02, 0.05, 0.18, -0.14, 1.05, -0.30, 0.28, 0.01],
-  "start_time": "2026-11-06T15:30:00+06:00",
-  "end_time": "2026-11-06T15:30:01+06:00"
+  "samples": [512, 518, 524, 538, 580, 720, 890, 610, 490, 505, 512],
+  "start_time": "2026-11-13T02:30:00+06:00",
+  "end_time": "2026-11-13T02:30:01+06:00"
 }
 ```
 
