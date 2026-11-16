@@ -60,7 +60,12 @@ class ECGWaveformRenderer {
 
     for (let i = 0; i < samples.length; i++) {
       if (this.sampleQueue.length < this.maxQueueSize) {
-        this.sampleQueue.push(samples[i]);
+        let val = Number(samples[i]);
+        // Auto-normalize raw 12-bit ADC integers (0-4095 centered at 2048) to [-1.5, +1.5]
+        if (Math.abs(val) > 10) {
+          val = (val - 2048.0) / 800.0;
+        }
+        this.sampleQueue.push(val);
       }
     }
   }
@@ -135,6 +140,11 @@ class ECGWaveformRenderer {
         sampleVal = this.sampleQueue.shift();
       } else {
         sampleVal = this.getSyntheticSample();
+      }
+
+      // Auto-normalize raw 12-bit ADC integers if unscaled
+      if (Math.abs(sampleVal) > 10) {
+        sampleVal = (sampleVal - 2048.0) / 800.0;
       }
 
       // Clamp value within bounds

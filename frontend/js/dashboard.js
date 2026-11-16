@@ -204,18 +204,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 6. Fetch Latest Recorded ECG Batch on startup
-  async function fetchInitialEcgBatch() {
+  let lastEcgBatchId = null;
+
+  // 6. Fetch Latest Recorded ECG Batch (Continuous REST Polling)
+  async function pollLatestEcgBatch() {
     try {
       const res = await fetch(`${APP_CONFIG.api.ecgLatest}?patient_id=${encodeURIComponent(currentPatientId)}`);
       if (res.ok) {
         const json = await res.json();
-        if (json.success && json.data && Array.isArray(json.data.samples)) {
-          ecgRenderer.pushSamples(json.data.samples);
+        if (json.success && json.data && Array.isArray(json.data.samples) && json.data.samples.length > 0) {
+          const currentBatchId = json.data.batch_id || (json.data.samples[0] + '_' + json.data.samples.length);
+          if (currentBatchId !== lastEcgBatchId) {
+            lastEcgBatchId = currentBatchId;
+            ecgRenderer.pushSamples(json.data.samples);
+          }
         }
       }
     } catch (e) {
-      console.log('Using simulated ECG baseline.');
+      // Continue drawing baseline
     }
   }
 
@@ -286,13 +292,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Start Services
-  fetchInitialEcgBatch();
+  pollLatestEcgBatch();
   fetchLatestTelemetry();
   loadPatientManualLogs();
   initMqttClient();
 
   // Run periodic fallback poll every 2.5 seconds
   setInterval(fetchLatestTelemetry, APP_CONFIG.pollingIntervalMs);
+
+  // Poll new ECG waveform batches every 1.5 seconds when running in REST Polling mode
+  if (!APP_CONFIG.mqtt.enabled) {
+    setInterval(pollLatestEcgBatch, 1500);
+  }
 
   // =========================================================================
   // 8. SCOPED MANUAL BLOOD PRESSURE LISTENER (Driven by manual_bp_modal.js)
