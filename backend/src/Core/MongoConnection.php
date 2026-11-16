@@ -216,6 +216,56 @@ class MongoConnection {
     }
 
     /**
+     * Count Documents in Collection
+     */
+    public function count(string $collection, array $filter = []): int {
+        if ($this->isConnected && $this->manager) {
+            try {
+                $mongoFilter = $this->prepareFilter($filter);
+                $cmdArgs = ['count' => $collection];
+                if (!empty($mongoFilter)) {
+                    $cmdArgs['query'] = $mongoFilter;
+                }
+                $command = new Command($cmdArgs);
+                $cursor = $this->manager->executeCommand($this->dbName, $command);
+                $response = $cursor->toArray()[0] ?? null;
+                if ($response && isset($response->n)) {
+                    return (int)$response->n;
+                }
+            } catch (MongoDriverException $e) {
+                error_log("MongoDB Count Error: " . $e->getMessage());
+            }
+        }
+
+        // Fallback to JSON file store
+        $data = $this->readJsonCollection($collection);
+        if (empty($filter)) {
+            return count($data);
+        }
+        $count = 0;
+        foreach ($data as $item) {
+            $match = true;
+            foreach ($filter as $k => $v) {
+                if (!isset($item[$k]) || $item[$k] != $v) {
+                    $match = false;
+                    break;
+                }
+            }
+            if ($match) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Clear All Documents from a Collection (Keeps collection intact)
+     */
+    public function clearCollection(string $collection): int {
+        return $this->delete($collection, [], ['limit' => 0]);
+    }
+
+    /**
      * JSON File Fallback Engine
      * Keeps application working seamlessly even if MongoDB Atlas credentials are not yet configured!
      */

@@ -15,7 +15,9 @@ const APP_CONFIG = {
     manualBpList: '../api/blood_pressure/list.php',
     alertsList: '../api/alerts/list.php',
     alertAcknowledge: '../api/alerts/acknowledge.php',
-    deviceStatus: '../api/devices/status.php'
+    deviceStatus: '../api/devices/status.php',
+    databaseStats: '../api/database/stats.php',
+    databaseReset: '../api/database/reset.php'
   },
 
   // MQTT over WebSocket Configuration
