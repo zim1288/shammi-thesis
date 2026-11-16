@@ -74,14 +74,23 @@ class TelemetryService {
             }
         }
 
-        // 3. Latest Automatic Sensor Vitals
-        $latestVitals = $this->vitalsRepo->getLatestByPatient($patientId);
+        // 3. Latest Automatic Sensor Vitals (Supports both patient_code like PT-8893 and MongoDB ObjectId)
+        $targetCode = $patient['patient_code'] ?? null;
+        $targetId   = $patient['id'] ?? $patientId;
+
+        $latestVitals = ($targetCode ? $this->vitalsRepo->getLatestByPatient($targetCode) : null)
+            ?: $this->vitalsRepo->getLatestByPatient($targetId)
+            ?: $this->vitalsRepo->getLatestByPatient($patientId);
 
         // 4. Latest Manual BP Record (Strictly Separated)
-        $latestManualBp = $this->bpRepo->getLatest($patientId);
+        $latestManualBp = ($targetCode ? $this->bpRepo->getLatest($targetCode) : null)
+            ?: $this->bpRepo->getLatest($targetId)
+            ?: $this->bpRepo->getLatest($patientId);
 
         // 5. Active Alerts Count
-        $activeAlerts = $this->alertRepo->countActive($patientId);
+        $activeAlerts = ($targetCode ? $this->alertRepo->countActive($targetCode) : 0)
+            ?: $this->alertRepo->countActive($targetId)
+            ?: $this->alertRepo->countActive($patientId);
 
         return [
             'prototype_notice'    => \SYSTEM_NOTICE,

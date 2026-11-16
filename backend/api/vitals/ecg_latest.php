@@ -18,8 +18,13 @@ if (empty($patientId)) {
     $patientId = !empty($all) ? ($all[0]['id'] ?? $all[0]['patient_code']) : 'UNASSIGNED';
 }
 
+$patientRepo = new \App\Repositories\PatientRepository();
+$patient = !empty($patientId) ? $patientRepo->findById($patientId) : null;
+$targetCode = $patient['patient_code'] ?? null;
+
 $repo = new EcgBatchRepository();
-$latestBatch = $repo->getLatestBatch($patientId);
+$latestBatch = ($targetCode ? $repo->getLatestBatch($targetCode) : null)
+    ?: $repo->getLatestBatch($patientId);
 
 if (!$latestBatch) {
     Response::success([

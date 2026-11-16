@@ -51,8 +51,8 @@ foreach ($allPatients as $p) {
         'wifi_rssi'     => -99
     ];
 
-    // Latest vitals snapshot
-    $latestVitals = $vitalsRepo->getLatestByPatient($patientId) ?: [
+    // Latest vitals snapshot (supports both patient_code and ObjectId)
+    $latestVitals = ($vitalsRepo->getLatestByPatient($p['patient_code'] ?? '') ?: $vitalsRepo->getLatestByPatient($patientId)) ?: [
         'ecg_heart_rate'      => null,
         'max30102_pulse_rate' => null,
         'spo2'                => null,

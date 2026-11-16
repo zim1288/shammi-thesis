@@ -20,8 +20,15 @@ if (empty($patientId)) {
 $limit     = min((int)$request->get('limit', 50), 1000);
 $format    = strtolower($request->get('format', 'json'));
 
+$patientRepo = new \App\Repositories\PatientRepository();
+$patient = !empty($patientId) ? $patientRepo->findById($patientId) : null;
+$targetCode = $patient['patient_code'] ?? null;
+
 $vitalsRepo = new VitalsRepository();
 $history = $vitalsRepo->getHistory($patientId, $limit);
+if (empty($history) && !empty($targetCode)) {
+    $history = $vitalsRepo->getHistory($targetCode, $limit);
+}
 
 // CSV Export for Research Dataset
 if ($format === 'csv') {
