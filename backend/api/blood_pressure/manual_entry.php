@@ -6,11 +6,13 @@ require_once __DIR__ . '/../../src/Core/Response.php';
 require_once __DIR__ . '/../../src/Core/Request.php';
 require_once __DIR__ . '/../../src/Core/Security.php';
 require_once __DIR__ . '/../../src/Repositories/BloodPressureRepository.php';
+require_once __DIR__ . '/../../src/Repositories/PatientRepository.php';
 
 use App\Core\Response;
 use App\Core\Request;
 use App\Core\Security;
 use App\Repositories\BloodPressureRepository;
+use App\Repositories\PatientRepository;
 
 $request = new Request();
 

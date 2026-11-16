@@ -11,6 +11,29 @@ date_default_timezone_set('Asia/Dhaka');
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
+// ---------------------------------------------------------
+// Autoloader Configuration
+// ---------------------------------------------------------
+// 1. Composer autoloader if installed
+if (file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    require_once __DIR__ . '/../../vendor/autoload.php';
+}
+
+// 2. PSR-4 Class Autoloader for App\ namespace
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $baseDir = __DIR__ . '/../src/';
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+    $relativeClass = substr($class, $len);
+    $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
 // Session Security Configuration
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', '1');

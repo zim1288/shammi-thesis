@@ -5,26 +5,38 @@
 require_once __DIR__ . '/../../src/Core/Response.php';
 require_once __DIR__ . '/../../src/Core/Request.php';
 require_once __DIR__ . '/../../src/Repositories/EcgBatchRepository.php';
+require_once __DIR__ . '/../../src/Repositories/PatientRepository.php';
 
 use App\Core\Response;
 use App\Core\Request;
 use App\Repositories\EcgBatchRepository;
+use App\Repositories\PatientRepository;
 
 $request = new Request();
 $patientId = $request->get('patient_id', '');
+$patientRepo = new PatientRepository();
+
 if (empty($patientId)) {
-    $patientRepo = new \App\Repositories\PatientRepository();
     $all = $patientRepo->getAll();
     $patientId = !empty($all) ? ($all[0]['id'] ?? $all[0]['patient_code']) : 'UNASSIGNED';
 }
 
-$patientRepo = new \App\Repositories\PatientRepository();
 $patient = !empty($patientId) ? $patientRepo->findById($patientId) : null;
 $targetCode = $patient['patient_code'] ?? null;
+$targetId   = $patient['id'] ?? null;
 
 $repo = new EcgBatchRepository();
-$latestBatch = ($targetCode ? $repo->getLatestBatch($targetCode) : null)
-    ?: $repo->getLatestBatch($patientId);
+$latestBatch = null;
+
+if (!empty($targetCode)) {
+    $latestBatch = $repo->getLatestBatch($targetCode);
+}
+if (!$latestBatch && !empty($targetId)) {
+    $latestBatch = $repo->getLatestBatch($targetId);
+}
+if (!$latestBatch && !empty($patientId)) {
+    $latestBatch = $repo->getLatestBatch($patientId);
+}
 
 if (!$latestBatch) {
     Response::success([

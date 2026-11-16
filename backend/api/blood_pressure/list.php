@@ -5,23 +5,36 @@
 require_once __DIR__ . '/../../src/Core/Response.php';
 require_once __DIR__ . '/../../src/Core/Request.php';
 require_once __DIR__ . '/../../src/Repositories/BloodPressureRepository.php';
+require_once __DIR__ . '/../../src/Repositories/PatientRepository.php';
 
 use App\Core\Response;
 use App\Core\Request;
 use App\Repositories\BloodPressureRepository;
+use App\Repositories\PatientRepository;
 
 $request = new Request();
 $patientId = $request->get('patient_id', '');
+$patientRepo = new PatientRepository();
+
 if (empty($patientId)) {
-    $patientRepo = new \App\Repositories\PatientRepository();
     $all = $patientRepo->getAll();
     $patientId = !empty($all) ? ($all[0]['id'] ?? $all[0]['patient_code']) : 'UNASSIGNED';
 }
 $limit     = min((int)$request->get('limit', 50), 200);
 $format    = strtolower($request->get('format', 'json'));
 
+$patient = !empty($patientId) ? $patientRepo->findById($patientId) : null;
+$targetCode = $patient['patient_code'] ?? null;
+$targetId   = $patient['id'] ?? null;
+
 $bpRepo = new BloodPressureRepository();
 $records = $bpRepo->listRecords($patientId, $limit);
+if (empty($records) && !empty($targetCode)) {
+    $records = $bpRepo->listRecords($targetCode, $limit);
+}
+if (empty($records) && !empty($targetId)) {
+    $records = $bpRepo->listRecords($targetId, $limit);
+}
 
 // CSV Export Support for Manual Entries
 if ($format === 'csv') {
