@@ -32,14 +32,15 @@
    */
   async function fetchCsrfToken() {
     try {
-      const res = await fetch(APP_CONFIG.api.csrf);
+      const res = await fetch(APP_CONFIG.api.csrf, { cache: 'no-store', credentials: 'same-origin' });
       const data = await res.json();
-      if (data && data.data && data.data.token) {
-        csrfToken = data.data.token;
+      if (data && data.data) {
+        csrfToken = data.data.csrf_token || data.data.token || '';
       }
     } catch (err) {
       console.warn('CSRF fetch warning:', err);
     }
+    return csrfToken;
   }
 
   /**
@@ -236,18 +237,23 @@
     btnExecuteReset.innerHTML = '<i class="ri-loader-4-line" style="display:inline-block;animation:spin 1s linear infinite;"></i> <span>Purging...</span>';
 
     try {
+      // Refresh CSRF token immediately prior to state-changing request
+      const activeCsrf = await fetchCsrfToken();
+
       const payload = {
         action: pendingResetAction.action,
         collection: pendingResetAction.collection || '',
         preserve_patients: pendingResetAction.preserve_patients || false,
-        confirm_text: txtConfirmKeyword.value.trim().toUpperCase()
+        confirm_text: txtConfirmKeyword.value.trim().toUpperCase(),
+        csrf_token: activeCsrf
       };
 
       const res = await fetch(APP_CONFIG.api.databaseReset, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken
+          'X-CSRF-Token': activeCsrf
         },
         body: JSON.stringify(payload)
       });
